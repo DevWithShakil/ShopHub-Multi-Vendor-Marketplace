@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
+use App\Models\Vendor;
+use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -74,16 +76,17 @@ class ProductResource extends Resource
                             ->numeric()
                             ->prefix('TK'),
 
+                        // ✅ FIX: Vendor Select
                         Select::make('vendor_id')
-                            ->relationship('vendor', 'shop_name')
+                            ->label('Shop')
+                            ->options(Vendor::all()->pluck('shop_name', 'id'))
                             ->searchable()
-                            ->preload()
                             ->required(),
 
                         Select::make('category_id')
-                            ->relationship('category', 'name')
+                            ->label('Category')
+                            ->options(Category::all()->pluck('name', 'id'))
                             ->searchable()
-                            ->preload()
                             ->required(),
                     ])->columns(2),
 
