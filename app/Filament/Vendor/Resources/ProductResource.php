@@ -135,37 +135,48 @@ class ProductResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\ImageColumn::make('thumb_image'),
+{
+    return $table
+        ->columns([
+            Tables\Columns\ImageColumn::make('thumb_image'),
 
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
+            Tables\Columns\TextColumn::make('name')
+                ->searchable()
+                ->sortable(),
 
-                Tables\Columns\TextColumn::make('category.name')
-                    ->sortable(),
+            Tables\Columns\BadgeColumn::make('approval_status')
+                ->label('Admin Status')
+                ->colors([
+                    'warning' => 'pending',
+                    'success' => 'approved',
+                    'danger' => 'rejected',
+                ])
+                ->formatStateUsing(fn (string $state): string => ucfirst($state)),
 
-                Tables\Columns\TextColumn::make('base_price')
-                    ->money('BDT')
-                    ->sortable(),
+            Tables\Columns\TextColumn::make('base_price')
+                ->money('BDT')
+                ->sortable(),
 
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
-                    ->label('Active'),
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
-    }
+            Tables\Columns\IconColumn::make('is_active')
+                ->boolean()
+                ->label('Visible'),
+        ])
+        ->filters([
+
+            Tables\Filters\SelectFilter::make('approval_status')
+                ->label('Filter by Status')
+                ->options([
+                    'pending' => 'Pending Review',
+                    'approved' => 'Published',
+                    'rejected' => 'Rejected',
+                ]),
+        ])
+        // ... actions and bulkActions remain same
+        ->actions([
+            Tables\Actions\EditAction::make(),
+            Tables\Actions\DeleteAction::make(),
+        ]);
+}
 
     public static function getRelations(): array
     {
