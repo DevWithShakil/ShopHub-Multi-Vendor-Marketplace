@@ -176,11 +176,12 @@ const cartStore = useCartStore();
                             <span>৳{{ cartStore.totalPrice + 120 }}</span>
                         </div>
 
-                        <button
-                            class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition transform active:scale-95"
+                        <Link
+                            :href="route('checkout.index')"
+                            class="block text-center w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition transform active:scale-95"
                         >
                             Proceed to Checkout
-                        </button>
+                        </Link>
 
                         <div
                             class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400"
