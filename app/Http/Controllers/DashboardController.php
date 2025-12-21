@@ -19,6 +19,7 @@ class DashboardController extends Controller
             'pending_orders' => Order::where('user_id', $userId)->where('status', 'pending')->count(),
             'completed_orders' => Order::where('user_id', $userId)->where('status', 'completed')->count(),
             'total_spend' => Order::where('user_id', $userId)->where('status', 'completed')->sum('total_amount'),
+            'wishlist_count' => auth()->user()->wishlist()->count(),
         ];
 
         $recent_orders = Order::where('user_id', $userId)

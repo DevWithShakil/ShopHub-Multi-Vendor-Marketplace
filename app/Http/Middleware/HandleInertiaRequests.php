@@ -40,6 +40,8 @@ public function share(Request $request): array
         ...parent::share($request),
         'auth' => [
             'user' => $request->user(),
+            'wishlist_ids' => $request->user() ? $request->user()->wishlist()->pluck('product_id') : [],
+
         ],
         'locale' => $locale,
         'translations' => $translations,

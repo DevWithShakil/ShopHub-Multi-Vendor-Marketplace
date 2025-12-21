@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import {
     MagnifyingGlassIcon,
@@ -16,10 +16,23 @@ import {
     LanguageIcon,
 } from "@heroicons/vue/24/outline";
 import { useCartStore } from "@/Stores/cartStore";
+import { useWishlistStore } from "@/Stores/wishlistStore";
 
+// 1. Initialize Stores
 const cartStore = useCartStore();
+const wishlistStore = useWishlistStore();
 const page = usePage();
+
+// 2. Computed User
 const user = computed(() => page.props.auth.user);
+
+// 3. Sync Wishlist on Load (Fixed logic)
+onMounted(() => {
+    // যদি ব্যাকএন্ড থেকে wishlist_ids আসে, তবে স্টোরে সেট করো
+    if (page.props.auth?.wishlist_ids) {
+        wishlistStore.setWishlist(page.props.auth.wishlist_ids);
+    }
+});
 
 const isMobileMenuOpen = ref(false);
 const isUserDropdownOpen = ref(false);
@@ -35,7 +48,7 @@ const isUserDropdownOpen = ref(false);
                     <span
                         class="flex items-center gap-1 hover:text-indigo-200 cursor-pointer"
                     >
-                        <PhoneIcon class="w-3 h-3" /> +880 1758-892417
+                        <PhoneIcon class="w-3 h-3" /> +880 1568-013150
                     </span>
                     <span
                         class="flex items-center gap-1 hover:text-indigo-200 cursor-pointer"
@@ -106,9 +119,8 @@ const isUserDropdownOpen = ref(false);
                                         ? 'bg-indigo-600 text-white border-indigo-600'
                                         : 'text-gray-600 hover:bg-gray-100'
                                 "
+                                >বাংলা</a
                             >
-                                বাংলা
-                            </a>
                             <a
                                 href="/language/en"
                                 class="px-2 py-1 text-xs font-bold border rounded transition"
@@ -117,9 +129,8 @@ const isUserDropdownOpen = ref(false);
                                         ? 'bg-indigo-600 text-white border-indigo-600'
                                         : 'text-gray-600 hover:bg-gray-100'
                                 "
+                                >EN</a
                             >
-                                EN
-                            </a>
                         </div>
 
                         <button
@@ -130,15 +141,22 @@ const isUserDropdownOpen = ref(false);
                         </button>
 
                         <Link
-                            href="#"
-                            class="hidden md:flex flex-col items-center text-gray-500 hover:text-red-500 transition group"
+                            :href="route('wishlist.index')"
+                            class="hidden md:flex flex-col items-center text-gray-500 hover:text-red-500 transition group relative"
                         >
                             <div class="relative">
                                 <HeartIcon
                                     class="w-6 h-6 group-hover:scale-110 transition-transform"
                                 />
                                 <span
-                                    class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold"
+                                    v-if="wishlistStore.count > 0"
+                                    class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold animate-pulse"
+                                >
+                                    {{ wishlistStore.count }}
+                                </span>
+                                <span
+                                    v-else
+                                    class="absolute -top-1 -right-1 bg-gray-400 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold"
                                     >0</span
                                 >
                             </div>
@@ -149,7 +167,7 @@ const isUserDropdownOpen = ref(false);
 
                         <Link
                             :href="route('cart.index')"
-                            class="flex flex-col items-center text-gray-500 hover:text-indigo-600 transition group relative"
+                            class="hidden md:flex flex-col items-center text-gray-500 hover:text-indigo-600 transition group relative"
                         >
                             <div class="relative">
                                 <ShoppingBagIcon
@@ -162,10 +180,9 @@ const isUserDropdownOpen = ref(false);
                                     {{ cartStore.itemCount }}
                                 </span>
                             </div>
-                            <span
-                                class="text-[10px] font-medium mt-0.5 hidden md:block"
-                                >{{ __("Cart") }}</span
-                            >
+                            <span class="text-[10px] font-medium mt-0.5">{{
+                                __("Cart")
+                            }}</span>
                         </Link>
 
                         <div class="hidden md:block relative">
@@ -355,9 +372,8 @@ const isUserDropdownOpen = ref(false);
                                         ? 'bg-indigo-600 text-white border-indigo-600'
                                         : 'bg-white text-gray-600 border-gray-300'
                                 "
+                                >বাংলা</a
                             >
-                                বাংলা
-                            </a>
                             <a
                                 href="/language/en"
                                 class="px-3 py-1 text-xs font-bold border rounded transition"
@@ -366,9 +382,8 @@ const isUserDropdownOpen = ref(false);
                                         ? 'bg-indigo-600 text-white border-indigo-600'
                                         : 'bg-white text-gray-600 border-gray-300'
                                 "
+                                >EN</a
                             >
-                                EN
-                            </a>
                         </div>
                     </div>
 
@@ -384,11 +399,35 @@ const isUserDropdownOpen = ref(false);
                     >
                         <ShoppingBagIcon class="w-5 h-5" /> {{ __("Home") }}
                     </Link>
+
                     <Link
-                        href="#"
-                        class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
+                        :href="route('wishlist.index')"
+                        class="flex items-center justify-between px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <HeartIcon class="w-5 h-5" /> {{ __("Wishlist") }}
+                        <div class="flex items-center gap-3">
+                            <HeartIcon class="w-5 h-5" /> {{ __("Wishlist") }}
+                        </div>
+                        <span
+                            v-if="wishlistStore.count > 0"
+                            class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
+                        >
+                            {{ wishlistStore.count }}
+                        </span>
+                    </Link>
+
+                    <Link
+                        :href="route('cart.index')"
+                        class="flex items-center justify-between px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
+                    >
+                        <div class="flex items-center gap-3">
+                            <ShoppingBagIcon class="w-5 h-5" /> {{ __("Cart") }}
+                        </div>
+                        <span
+                            v-if="cartStore.itemCount > 0"
+                            class="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
+                        >
+                            {{ cartStore.itemCount }}
+                        </span>
                     </Link>
 
                     <div class="border-t border-gray-100 my-2"></div>

@@ -7,15 +7,13 @@ import {
     CheckBadgeIcon,
     BanknotesIcon,
     ArrowRightIcon,
+    HeartIcon, // ✅ Added Heart Icon
 } from "@heroicons/vue/24/outline";
 
 defineProps({
     stats: Object,
     recent_orders: Array,
 });
-
-// Stats Card Component for Reusability
-const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
 </script>
 
 <template>
@@ -24,21 +22,23 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
     <UserDashboardLayout>
         <div class="mb-8 animate-fade-in-up">
             <h1 class="text-2xl lg:text-3xl font-bold text-gray-800">
-                Welcome Back,
+                {{ __("Welcome Back") }},
             </h1>
             <p class="text-gray-500 mt-1">
-                Here is what’s happening with your account today.
+                {{ __("Here is what’s happening with your account today.") }}
             </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"
+        >
             <div
                 class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 group"
             >
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm font-medium text-gray-500">
-                            Total Orders
+                            {{ __("Total Orders") }}
                         </p>
                         <h3
                             class="text-2xl font-bold text-gray-800 mt-1 group-hover:text-indigo-600 transition-colors"
@@ -59,7 +59,9 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
             >
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Pending</p>
+                        <p class="text-sm font-medium text-gray-500">
+                            {{ __("Pending") }}
+                        </p>
                         <h3
                             class="text-2xl font-bold text-gray-800 mt-1 group-hover:text-yellow-600 transition-colors"
                         >
@@ -80,7 +82,7 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm font-medium text-gray-500">
-                            Completed
+                            {{ __("Completed") }}
                         </p>
                         <h3
                             class="text-2xl font-bold text-gray-800 mt-1 group-hover:text-green-600 transition-colors"
@@ -102,7 +104,29 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm font-medium text-gray-500">
-                            Total Spend
+                            {{ __("Wishlist") }}
+                        </p>
+                        <h3
+                            class="text-2xl font-bold text-gray-800 mt-1 group-hover:text-red-500 transition-colors"
+                        >
+                            {{ stats.wishlist_count }}
+                        </h3>
+                    </div>
+                    <div
+                        class="p-3 bg-red-50 text-red-500 rounded-xl group-hover:scale-110 transition-transform duration-300"
+                    >
+                        <HeartIcon class="w-6 h-6" />
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 group sm:col-span-2 lg:col-span-1"
+            >
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">
+                            {{ __("Total Spend") }}
                         </p>
                         <h3
                             class="text-2xl font-bold text-gray-800 mt-1 group-hover:text-purple-600 transition-colors"
@@ -125,12 +149,15 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
             <div
                 class="p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
-                <h2 class="text-lg font-bold text-gray-800">Recent Orders</h2>
+                <h2 class="text-lg font-bold text-gray-800">
+                    {{ __("Recent Orders") }}
+                </h2>
                 <Link
                     href="/dashboard/orders"
                     class="inline-flex items-center gap-2 text-sm text-indigo-600 font-semibold hover:text-indigo-800 transition"
                 >
-                    View All Orders <ArrowRightIcon class="w-4 h-4" />
+                    {{ __("View All Orders") }}
+                    <ArrowRightIcon class="w-4 h-4" />
                 </Link>
             </div>
 
@@ -213,12 +240,12 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
                                     <ShoppingBagIcon
                                         class="w-12 h-12 text-gray-300 mb-2"
                                     />
-                                    <p>No orders found.</p>
+                                    <p>{{ __("No orders found.") }}</p>
                                     <Link
                                         href="/"
                                         class="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
                                     >
-                                        Start Shopping
+                                        {{ __("Start Shopping") }}
                                     </Link>
                                 </div>
                             </td>
@@ -231,7 +258,9 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
 </template>
 
 <style scoped>
-/* Simple Fade In Animation */
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -241,8 +270,5 @@ const StatCard = ({ title, value, icon, colorClass, bgClass }) => {};
         opacity: 1;
         transform: translateY(0);
     }
-}
-.animate-fade-in-up {
-    animation: fadeInUp 0.5s ease-out forwards;
 }
 </style>

@@ -70,6 +70,11 @@ public function vendor()
     return $this->hasOne(Vendor::class);
 }
 
+public function wishlist()
+{
+    return $this->belongsToMany(Product::class, 'wishlists', 'user_id', 'product_id');
+}
+
     // Helpers
     public function isAdmin() { return $this->role === 'admin'; }
     public function isVendor() { return $this->role === 'vendor'; }
