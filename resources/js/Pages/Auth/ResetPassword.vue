@@ -1,101 +1,239 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from "@inertiajs/vue3";
+import {
+    ShoppingBagIcon,
+    EnvelopeIcon,
+    LockClosedIcon,
+    ShieldCheckIcon,
+    ArrowPathIcon,
+} from "@heroicons/vue/24/outline";
 
 const props = defineProps({
-    email: {
-        type: String,
-        required: true,
-    },
-    token: {
-        type: String,
-        required: true,
-    },
+    email: String,
+    token: String,
 });
 
 const form = useForm({
     token: props.token,
     email: props.email,
-    password: '',
-    password_confirmation: '',
+    password: "",
+    password_confirmation: "",
 });
 
 const submit = () => {
-    form.post(route('password.store'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
+    form.post(route("password.update"), {
+        onFinish: () => form.reset("password", "password_confirmation"),
     });
 };
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Reset Password" />
+    <Head title="Reset Password" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
+    <div
+        class="min-h-screen flex bg-white selection:bg-indigo-500 selection:text-white"
+    >
+        <div class="hidden lg:flex w-1/2 bg-gray-900 relative overflow-hidden">
+            <div class="absolute inset-0">
+                <img
+                    src="https://images.unsplash.com/photo-1614064641938-3e8529967160?q=80&w=2070&auto=format&fit=crop"
+                    alt="Reset Password Background"
+                    class="w-full h-full object-cover opacity-30"
                 />
-
-                <InputError class="mt-2" :message="form.errors.email" />
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-black/60"
+                ></div>
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div
+                class="relative z-10 w-full flex flex-col justify-between p-16 text-white"
+            >
+                <div>
+                    <div class="flex items-center gap-3 mb-8">
+                        <div
+                            class="bg-white/10 p-2 rounded-lg backdrop-blur-md border border-white/20"
+                        >
+                            <ShoppingBagIcon class="w-6 h-6 text-white" />
+                        </div>
+                        <span class="text-2xl font-bold tracking-wide uppercase"
+                            >ShopHub</span
+                        >
+                    </div>
+                    <h1
+                        class="text-5xl font-bold leading-tight mb-6 tracking-tight"
+                    >
+                        Secure Your <br />
+                        <span
+                            class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200"
+                            >Account Access.</span
+                        >
+                    </h1>
+                    <p class="text-gray-300 text-lg font-light max-w-md">
+                        Create a strong new password to keep your orders and
+                        personal information safe.
+                    </p>
+                </div>
 
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
+                <div
+                    class="flex justify-between items-end border-t border-white/10 pt-8"
                 >
-                    Reset Password
-                </PrimaryButton>
+                    <p class="text-sm text-gray-400">
+                        &copy; 2025 ShopHub Inc.
+                    </p>
+                    <div
+                        class="flex items-center gap-2 text-green-400 bg-green-400/10 px-3 py-1 rounded-full border border-green-400/20"
+                    >
+                        <ShieldCheckIcon class="w-4 h-4" />
+                        <span class="text-xs font-bold uppercase tracking-wider"
+                            >Verified Secure</span
+                        >
+                    </div>
+                </div>
             </div>
-        </form>
-    </GuestLayout>
+        </div>
+
+        <div
+            class="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white"
+        >
+            <div class="w-full max-w-[420px]">
+                <div class="lg:hidden flex items-center gap-2 mb-8">
+                    <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                        <ShoppingBagIcon class="w-6 h-6" />
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">ShopHub</span>
+                </div>
+
+                <div class="mb-8">
+                    <div
+                        class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-indigo-100"
+                    >
+                        <ArrowPathIcon class="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
+                        Set New Password
+                    </h2>
+                    <p class="text-gray-500 mt-2 text-sm">
+                        Please enter your email and choose a new password.
+                    </p>
+                </div>
+
+                <form @submit.prevent="submit" class="space-y-5">
+                    <div class="group">
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-2"
+                            >Email Address</label
+                        >
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                            >
+                                <EnvelopeIcon
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+                                />
+                            </div>
+                            <input
+                                v-model="form.email"
+                                type="email"
+                                required
+                                autofocus
+                                class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 outline-none bg-gray-50/50 focus:bg-white"
+                                placeholder="name@company.com"
+                            />
+                        </div>
+                        <p
+                            v-if="form.errors.email"
+                            class="text-red-500 text-xs mt-1 font-medium"
+                        >
+                            {{ form.errors.email }}
+                        </p>
+                    </div>
+
+                    <div class="group">
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-2"
+                            >New Password</label
+                        >
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                            >
+                                <LockClosedIcon
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+                                />
+                            </div>
+                            <input
+                                v-model="form.password"
+                                type="password"
+                                required
+                                class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 outline-none bg-gray-50/50 focus:bg-white"
+                                placeholder="Enter new password"
+                            />
+                        </div>
+                        <p
+                            v-if="form.errors.password"
+                            class="text-red-500 text-xs mt-1 font-medium"
+                        >
+                            {{ form.errors.password }}
+                        </p>
+                    </div>
+
+                    <div class="group">
+                        <label
+                            class="block text-sm font-semibold text-gray-700 mb-2"
+                            >Confirm Password</label
+                        >
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                            >
+                                <LockClosedIcon
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors"
+                                />
+                            </div>
+                            <input
+                                v-model="form.password_confirmation"
+                                type="password"
+                                required
+                                class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 outline-none bg-gray-50/50 focus:bg-white"
+                                placeholder="Confirm new password"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        :disabled="form.processing"
+                        class="w-full py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg shadow-gray-200 transform transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 group"
+                    >
+                        <span v-if="!form.processing">Reset Password</span>
+                        <ArrowPathIcon
+                            v-if="!form.processing"
+                            class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"
+                        />
+
+                        <svg
+                            v-else
+                            class="animate-spin h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </template>
