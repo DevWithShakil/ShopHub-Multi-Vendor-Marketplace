@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,5 +27,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.details');
 
 require __DIR__.'/auth.php';

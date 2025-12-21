@@ -1,7 +1,11 @@
 <script setup>
 import { Head, Link } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
-import { ShoppingCartIcon, StarIcon } from "@heroicons/vue/24/solid";
+import {
+    ShoppingCartIcon,
+    StarIcon,
+    ArrowRightIcon,
+} from "@heroicons/vue/24/solid";
 
 defineProps({
     products: Array,
@@ -16,47 +20,60 @@ defineProps({
             class="relative bg-gradient-to-r from-indigo-900 to-purple-800 h-[400px] flex items-center overflow-hidden"
         >
             <div
-                class="absolute inset-0 bg-[url('https://cdn.pixabay.com/photo/2017/03/13/17/26/ecommerce-2140603_1280.jpg')] opacity-20 bg-cover bg-center"
+                class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop')] opacity-20 bg-cover bg-center"
             ></div>
+
             <div
                 class="container mx-auto px-6 relative z-10 text-center md:text-left"
             >
                 <span
                     class="text-indigo-300 font-bold tracking-widest uppercase text-sm mb-2 block animate-pulse"
-                    >New Season</span
                 >
+                    New Season Arrival
+                </span>
                 <h1
-                    class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight"
+                    class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-lg"
                 >
                     Upgrade Your <br />
                     <span
                         class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500"
-                        >Digital Life</span
                     >
+                        Lifestyle Today
+                    </span>
                 </h1>
-                <button
-                    class="bg-white text-indigo-900 px-8 py-3 rounded-full font-bold hover:bg-indigo-50 hover:scale-105 transition transform shadow-xl"
-                >
-                    Shop Now
-                </button>
+                <div class="flex gap-4 justify-center md:justify-start">
+                    <button
+                        class="bg-white text-indigo-900 px-8 py-3 rounded-full font-bold hover:bg-indigo-50 hover:scale-105 transition transform shadow-xl"
+                    >
+                        Shop Now
+                    </button>
+                    <button
+                        class="border-2 border-white text-white px-8 py-3 rounded-full font-bold hover:bg-white/10 transition transform"
+                    >
+                        View Collections
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="container mx-auto px-4 py-16">
-            <div class="flex justify-between items-end mb-8">
+        <div class="container mx-auto px-4 py-16 bg-gray-50/50">
+            <div
+                class="flex justify-between items-end mb-10 border-b border-gray-200 pb-4"
+            >
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900">
                         Trending Products
                     </h2>
                     <p class="text-gray-500 mt-1">
-                        Handpicked items just for you
+                        Handpicked premium items just for you
                     </p>
                 </div>
                 <Link
                     href="#"
-                    class="text-indigo-600 font-semibold hover:underline"
-                    >View All &rarr;</Link
+                    class="flex items-center gap-1 text-indigo-600 font-semibold hover:text-indigo-800 transition"
                 >
+                    View All <ArrowRightIcon class="w-4 h-4" />
+                </Link>
             </div>
 
             <div
@@ -65,14 +82,17 @@ defineProps({
                 <div
                     v-for="product in products"
                     :key="product.id"
-                    class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full"
+                    class="group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full relative"
                 >
-                    <div class="relative h-60 bg-gray-50 overflow-hidden">
+                    <Link
+                        :href="route('product.details', product.slug)"
+                        class="block relative h-64 bg-gray-100 overflow-hidden cursor-pointer"
+                    >
                         <img
                             v-if="product.thumb_image"
                             :src="'/storage/' + product.thumb_image"
-                            alt="Product"
-                            class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                            :alt="product.name"
+                            class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500 mix-blend-multiply"
                         />
                         <div
                             v-else
@@ -82,17 +102,22 @@ defineProps({
                         </div>
 
                         <span
-                            class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md"
+                            v-if="product.discount_price"
+                            class="absolute top-3 left-3 bg-rose-500 text-white text-[10px] uppercase font-bold px-2 py-1 rounded-sm shadow-sm"
                         >
                             Sale
                         </span>
 
-                        <button
-                            class="absolute bottom-3 right-3 bg-white text-gray-900 p-3 rounded-full shadow-lg translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-indigo-600 hover:text-white"
-                        >
-                            <ShoppingCartIcon class="w-5 h-5" />
-                        </button>
-                    </div>
+                        <div
+                            class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        ></div>
+                    </Link>
+
+                    <button
+                        class="absolute top-3 right-3 bg-white text-gray-800 p-2.5 rounded-full shadow-md translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 hover:bg-indigo-600 hover:text-white z-10"
+                    >
+                        <ShoppingCartIcon class="w-5 h-5" />
+                    </button>
 
                     <div class="p-5 flex-1 flex flex-col">
                         <p
@@ -100,42 +125,50 @@ defineProps({
                         >
                             {{ product.category?.name || "General" }}
                         </p>
-                        <h3
-                            class="text-lg font-bold text-gray-800 mb-2 truncate group-hover:text-indigo-600 transition-colors"
-                        >
-                            {{ product.name }}
-                        </h3>
 
-                        <div class="flex items-center mb-3">
-                            <StarIcon
-                                v-for="i in 5"
-                                :key="i"
-                                class="w-4 h-4 text-yellow-400"
-                            />
-                            <span class="text-xs text-gray-400 ml-1">(45)</span>
+                        <Link :href="route('product.details', product.slug)">
+                            <h3
+                                class="text-lg font-bold text-gray-800 mb-2 truncate group-hover:text-indigo-600 transition-colors"
+                            >
+                                {{ product.name }}
+                            </h3>
+                        </Link>
+
+                        <div class="flex items-center mb-4">
+                            <div class="flex text-yellow-400">
+                                <StarIcon
+                                    v-for="i in 5"
+                                    :key="i"
+                                    class="w-4 h-4"
+                                />
+                            </div>
+                            <span class="text-xs text-gray-400 ml-2 font-medium"
+                                >(4.8)</span
+                            >
                         </div>
 
                         <div
-                            class="mt-auto flex justify-between items-center border-t pt-3 border-dashed border-gray-200"
+                            class="mt-auto flex justify-between items-end border-t border-dashed border-gray-100 pt-4"
                         >
-                            <div>
+                            <div class="flex flex-col">
                                 <span
-                                    class="text-gray-400 line-through text-sm block"
+                                    class="text-gray-400 line-through text-xs font-medium"
                                     v-if="product.discount_price"
                                 >
-                                    ৳{{ product.base_price * 1.2 }}
+                                    ৳{{ parseInt(product.base_price) + 500 }}
                                 </span>
                                 <span
-                                    class="text-xl font-extrabold text-gray-900"
+                                    class="text-xl font-extrabold text-gray-900 leading-none"
                                 >
                                     ৳{{ product.base_price }}
                                 </span>
                             </div>
-                            <button
-                                class="text-sm font-medium text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
+                            <Link
+                                :href="route('product.details', product.slug)"
+                                class="text-sm font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-600 hover:text-white transition-colors"
                             >
-                                Details
-                            </button>
+                                Buy Now
+                            </Link>
                         </div>
                     </div>
                 </div>
