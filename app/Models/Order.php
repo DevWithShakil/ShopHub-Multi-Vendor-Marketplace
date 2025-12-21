@@ -11,7 +11,6 @@ class Order extends Model
     protected $guarded = [];
     protected $casts = [
         'address_details' => 'array',
-        'items' => 'array',
     ];
 
     public function items()

@@ -21,8 +21,16 @@ const submitOrder = () => {
         onSuccess: () => {
             cartStore.clearCart();
         },
-        onError: () => {
-            alert("Something went wrong! Please check your inputs.");
+        // onError: () => {
+        //     alert("Something went wrong! Please check your inputs.");
+        // },
+
+        onError: (errors) => {
+            // এই লাইনটি আসল এরর দেখাবে
+            console.log("Order Error:", errors);
+
+            // ইউজারকেও দেখাবে কোন ফিল্ডে সমস্যা
+            alert("Error: " + JSON.stringify(errors));
         },
     });
 };

@@ -76,17 +76,18 @@ class ProductResource extends Resource
                             ->numeric()
                             ->prefix('TK'),
 
-                        // ✅ FIX: Vendor Select
                         Select::make('vendor_id')
                             ->label('Shop')
-                            ->options(Vendor::all()->pluck('shop_name', 'id'))
+                            ->options(fn () => Vendor::pluck('shop_name', 'id'))
                             ->searchable()
+                            ->preload()
                             ->required(),
 
                         Select::make('category_id')
                             ->label('Category')
-                            ->options(Category::all()->pluck('name', 'id'))
+                            ->options(fn () => Category::pluck('name', 'id'))
                             ->searchable()
+                            ->preload()
                             ->required(),
                     ])->columns(2),
 

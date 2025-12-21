@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -40,5 +41,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/order-success/{invoice_no}', [CheckoutController::class, 'success'])->name('order.success');
+
+Route::post('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+Route::post('/payment/fail', [PaymentController::class, 'fail'])->name('payment.fail');
+Route::post('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
 
 require __DIR__.'/auth.php';
