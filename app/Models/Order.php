@@ -9,8 +9,18 @@ class Order extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    protected $casts = [
+        'address_details' => 'array',
+        'items' => 'array',
+    ];
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }
