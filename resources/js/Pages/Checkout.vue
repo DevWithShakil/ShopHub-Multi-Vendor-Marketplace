@@ -21,6 +21,9 @@ const submitOrder = () => {
         onSuccess: () => {
             cartStore.clearCart();
         },
+        onError: () => {
+            alert("Something went wrong! Please check your inputs.");
+        },
     });
 };
 </script>

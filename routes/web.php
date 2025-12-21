@@ -39,4 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 });
 
+Route::get('/order-success/{invoice_no}', [CheckoutController::class, 'success'])->name('order.success');
+
 require __DIR__.'/auth.php';
