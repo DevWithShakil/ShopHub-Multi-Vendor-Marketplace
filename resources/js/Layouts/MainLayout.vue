@@ -9,6 +9,9 @@ import {
     XMarkIcon,
     HeartIcon,
 } from "@heroicons/vue/24/outline";
+import { useCartStore } from "@/Stores/cartStore";
+
+const cartStore = useCartStore();
 
 const isMobileMenuOpen = ref(false);
 </script>
@@ -52,8 +55,9 @@ const isMobileMenuOpen = ref(false);
                             <HeartIcon class="w-7 h-7" />
                             <span
                                 class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                                >0</span
                             >
+                                0
+                            </span>
                         </Link>
 
                         <Link
@@ -61,10 +65,13 @@ const isMobileMenuOpen = ref(false);
                             class="relative hover:text-indigo-600 transition-colors"
                         >
                             <ShoppingBagIcon class="w-7 h-7" />
+
                             <span
-                                class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                                >2</span
+                                v-if="cartStore.itemCount > 0"
+                                class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-bounce"
                             >
+                                {{ cartStore.itemCount }}
+                            </span>
                         </Link>
 
                         <Link
@@ -106,9 +113,9 @@ const isMobileMenuOpen = ref(false);
                     <Link href="#" class="block py-2 text-gray-600 font-medium"
                         >Wishlist</Link
                     >
-                    <Link href="#" class="block py-2 text-gray-600 font-medium"
-                        >Cart</Link
-                    >
+                    <Link href="#" class="block py-2 text-gray-600 font-medium">
+                        Cart ({{ cartStore.itemCount }})
+                    </Link>
                     <Link
                         href="/login"
                         class="block py-2 text-indigo-600 font-bold"
@@ -192,7 +199,7 @@ const isMobileMenuOpen = ref(false);
             <div
                 class="text-center text-xs text-gray-500 mt-12 border-t border-gray-800 pt-8"
             >
-                &copy; 2024 ShopHub. All rights reserved.
+                &copy; 2025 ShopHub. All rights reserved.
             </div>
         </footer>
     </div>

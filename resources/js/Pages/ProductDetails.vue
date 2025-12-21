@@ -4,6 +4,15 @@ import { Head, Link } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { StarIcon, ShieldCheckIcon, TruckIcon } from "@heroicons/vue/24/solid";
 import { HeartIcon, ShareIcon } from "@heroicons/vue/24/outline";
+import { useCartStore } from "@/Stores/cartStore";
+
+const cartStore = useCartStore();
+const quantity = ref(1);
+
+const addToCart = () => {
+    cartStore.addToCart(props.product, quantity.value, selectedVariant.value);
+    alert("Product added to cart!");
+};
 
 const props = defineProps({
     product: Object,
@@ -152,15 +161,22 @@ const uniqueAttributes = computed(() => {
                         <div
                             class="flex items-center border border-gray-300 rounded-lg"
                         >
-                            <button class="px-4 py-2 hover:bg-gray-100">
+                            <button
+                                @click="quantity > 1 ? quantity-- : null"
+                                class="px-4 py-2 hover:bg-gray-100"
+                            >
                                 -
                             </button>
-                            <span class="px-4 font-medium">1</span>
-                            <button class="px-4 py-2 hover:bg-gray-100">
+                            <span class="px-4 font-medium">{{ quantity }}</span>
+                            <button
+                                @click="quantity++"
+                                class="px-4 py-2 hover:bg-gray-100"
+                            >
                                 +
                             </button>
                         </div>
                         <button
+                            @click="addToCart"
                             class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition"
                         >
                             Add to Cart
