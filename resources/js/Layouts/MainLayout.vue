@@ -61,7 +61,7 @@ const isMobileMenuOpen = ref(false);
                         </Link>
 
                         <Link
-                            href="#"
+                            :href="route('cart.index')"
                             class="relative hover:text-indigo-600 transition-colors"
                         >
                             <ShoppingBagIcon class="w-7 h-7" />

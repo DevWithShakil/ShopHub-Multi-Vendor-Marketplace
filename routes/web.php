@@ -29,4 +29,8 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.details');
 
+Route::get('/cart', function () {
+    return inertia('Cart');
+})->name('cart.index');
+
 require __DIR__.'/auth.php';
