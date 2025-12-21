@@ -9,6 +9,8 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\App;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -59,6 +61,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/dashboard/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update.info');
     Route::post('/dashboard/password/update', [DashboardController::class, 'updatePassword'])->name('profile.update.password');
 });
+
+// language switcher routes
+Route::get('/language/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'bn'])) {
+        Session::put('locale', $locale);
+    }
+    return back();
+})->name('language.switch');
+
 
 Route::post('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
 Route::post('/payment/fail', [PaymentController::class, 'fail'])->name('payment.fail');

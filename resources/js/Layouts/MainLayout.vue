@@ -4,7 +4,6 @@ import { Link, usePage } from "@inertiajs/vue3";
 import {
     MagnifyingGlassIcon,
     ShoppingBagIcon,
-    UserIcon,
     Bars3Icon,
     XMarkIcon,
     HeartIcon,
@@ -14,6 +13,7 @@ import {
     ArrowRightOnRectangleIcon,
     Squares2X2Icon,
     UserCircleIcon,
+    LanguageIcon,
 } from "@heroicons/vue/24/outline";
 import { useCartStore } from "@/Stores/cartStore";
 
@@ -40,17 +40,17 @@ const isUserDropdownOpen = ref(false);
                     <span
                         class="flex items-center gap-1 hover:text-indigo-200 cursor-pointer"
                     >
-                        <DevicePhoneMobileIcon class="w-3 h-3" /> Save more on
-                        App
+                        <DevicePhoneMobileIcon class="w-3 h-3" />
+                        {{ __("Save more on App") }}
                     </span>
                 </div>
                 <div class="flex gap-4">
-                    <Link href="#" class="hover:text-indigo-200"
-                        >Sell on ShopHub</Link
-                    >
-                    <Link href="#" class="hover:text-indigo-200"
-                        >Track Order</Link
-                    >
+                    <Link href="#" class="hover:text-indigo-200">{{
+                        __("Sell on ShopHub")
+                    }}</Link>
+                    <Link href="#" class="hover:text-indigo-200">{{
+                        __("Track Order")
+                    }}</Link>
                 </div>
             </div>
         </div>
@@ -78,7 +78,7 @@ const isUserDropdownOpen = ref(false);
                             >
                             <span
                                 class="text-[10px] font-bold text-gray-500 tracking-widest uppercase"
-                                >Premium Store</span
+                                >{{ __("Premium Store") }}</span
                             >
                         </div>
                     </Link>
@@ -86,7 +86,7 @@ const isUserDropdownOpen = ref(false);
                     <div class="hidden md:flex flex-1 max-w-2xl relative">
                         <input
                             type="text"
-                            placeholder="Search in ShopHub..."
+                            :placeholder="__('Search in ShopHub...')"
                             class="w-full bg-gray-100 border-2 border-transparent focus:bg-white focus:border-indigo-500 rounded-l-lg py-2.5 px-4 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-0 transition-all"
                         />
                         <button
@@ -97,6 +97,31 @@ const isUserDropdownOpen = ref(false);
                     </div>
 
                     <div class="flex items-center gap-3 md:gap-5">
+                        <div class="hidden md:flex items-center gap-2 mr-2">
+                            <a
+                                href="/language/bn"
+                                class="px-2 py-1 text-xs font-bold border rounded transition"
+                                :class="
+                                    $page.props.locale === 'bn'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                "
+                            >
+                                বাংলা
+                            </a>
+                            <a
+                                href="/language/en"
+                                class="px-2 py-1 text-xs font-bold border rounded transition"
+                                :class="
+                                    $page.props.locale === 'en'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                "
+                            >
+                                EN
+                            </a>
+                        </div>
+
                         <button
                             @click="isMobileMenuOpen = true"
                             class="md:hidden text-gray-600 p-2"
@@ -117,9 +142,9 @@ const isUserDropdownOpen = ref(false);
                                     >0</span
                                 >
                             </div>
-                            <span class="text-[10px] font-medium mt-0.5"
-                                >Wishlist</span
-                            >
+                            <span class="text-[10px] font-medium mt-0.5">{{
+                                __("Wishlist")
+                            }}</span>
                         </Link>
 
                         <Link
@@ -139,7 +164,7 @@ const isUserDropdownOpen = ref(false);
                             </div>
                             <span
                                 class="text-[10px] font-medium mt-0.5 hidden md:block"
-                                >Cart</span
+                                >{{ __("Cart") }}</span
                             >
                         </Link>
 
@@ -161,7 +186,7 @@ const isUserDropdownOpen = ref(false);
                                     />
                                     <div class="text-left">
                                         <p class="text-xs text-gray-500">
-                                            Hello,
+                                            {{ __("Hello") }},
                                         </p>
                                         <p
                                             class="text-sm font-bold text-gray-800 leading-none"
@@ -195,21 +220,21 @@ const isUserDropdownOpen = ref(false);
                                         class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
                                     >
                                         <Squares2X2Icon class="w-4 h-4" />
-                                        Dashboard
+                                        {{ __("Dashboard") }}
                                     </Link>
                                     <Link
                                         href="/dashboard/orders"
                                         class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
                                     >
-                                        <ShoppingBagIcon class="w-4 h-4" /> My
-                                        Orders
+                                        <ShoppingBagIcon class="w-4 h-4" />
+                                        {{ __("My Orders") }}
                                     </Link>
                                     <Link
                                         href="/dashboard/profile"
                                         class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
                                     >
                                         <UserCircleIcon class="w-4 h-4" />
-                                        Profile
+                                        {{ __("Profile Settings") }}
                                     </Link>
                                     <div
                                         class="border-t border-gray-50 my-1"
@@ -223,7 +248,7 @@ const isUserDropdownOpen = ref(false);
                                         <ArrowRightOnRectangleIcon
                                             class="w-4 h-4"
                                         />
-                                        Logout
+                                        {{ __("Logout") }}
                                     </Link>
                                 </div>
                             </div>
@@ -232,13 +257,13 @@ const isUserDropdownOpen = ref(false);
                                 <Link
                                     href="/login"
                                     class="text-gray-600 font-bold hover:text-indigo-600 text-sm"
-                                    >Login</Link
+                                    >{{ __("Login") }}</Link
                                 >
                                 <span class="text-gray-300">|</span>
                                 <Link
                                     href="/register"
                                     class="text-gray-600 font-bold hover:text-indigo-600 text-sm"
-                                    >Sign Up</Link
+                                    >{{ __("Register") }}</Link
                                 >
                             </div>
                         </div>
@@ -249,7 +274,7 @@ const isUserDropdownOpen = ref(false);
                     <div class="relative">
                         <input
                             type="text"
-                            placeholder="Search for products..."
+                            :placeholder="__('Search for products...')"
                             class="w-full bg-gray-100 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-indigo-500 border-none"
                         />
                         <MagnifyingGlassIcon
@@ -270,7 +295,7 @@ const isUserDropdownOpen = ref(false);
                 class="fixed inset-y-0 left-0 w-4/5 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col"
             >
                 <div
-                    class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white"
+                    class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white relative"
                 >
                     <div v-if="user" class="flex items-center gap-3">
                         <img
@@ -289,17 +314,19 @@ const isUserDropdownOpen = ref(false);
                         </div>
                     </div>
                     <div v-else class="flex flex-col gap-3">
-                        <p class="font-bold text-lg mb-1">Welcome Guest!</p>
+                        <p class="font-bold text-lg mb-1">
+                            {{ __("Welcome Guest!") }}
+                        </p>
                         <div class="flex gap-3">
                             <Link
                                 href="/login"
                                 class="px-4 py-1.5 bg-white text-indigo-600 rounded text-sm font-bold"
-                                >Login</Link
+                                >{{ __("Login") }}</Link
                             >
                             <Link
                                 href="/register"
                                 class="px-4 py-1.5 border border-white text-white rounded text-sm font-bold"
-                                >Register</Link
+                                >{{ __("Register") }}</Link
                             >
                         </div>
                     </div>
@@ -312,23 +339,56 @@ const isUserDropdownOpen = ref(false);
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-4 space-y-1">
+                    <div
+                        class="flex items-center justify-between px-3 py-3 mb-4 bg-gray-50 rounded-lg border border-gray-100"
+                    >
+                        <div class="flex items-center gap-2 text-gray-600">
+                            <LanguageIcon class="w-5 h-5" />
+                            <span class="text-sm font-bold">Language</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a
+                                href="/language/bn"
+                                class="px-3 py-1 text-xs font-bold border rounded transition"
+                                :class="
+                                    $page.props.locale === 'bn'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-white text-gray-600 border-gray-300'
+                                "
+                            >
+                                বাংলা
+                            </a>
+                            <a
+                                href="/language/en"
+                                class="px-3 py-1 text-xs font-bold border rounded transition"
+                                :class="
+                                    $page.props.locale === 'en'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-white text-gray-600 border-gray-300'
+                                "
+                            >
+                                EN
+                            </a>
+                        </div>
+                    </div>
+
                     <p
                         class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2"
                     >
-                        Menu
+                        {{ __("Menu") }}
                     </p>
 
                     <Link
                         href="/"
                         class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <ShoppingBagIcon class="w-5 h-5" /> Home
+                        <ShoppingBagIcon class="w-5 h-5" /> {{ __("Home") }}
                     </Link>
                     <Link
                         href="#"
                         class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <HeartIcon class="w-5 h-5" /> Wishlist
+                        <HeartIcon class="w-5 h-5" /> {{ __("Wishlist") }}
                     </Link>
 
                     <div class="border-t border-gray-100 my-2"></div>
@@ -336,28 +396,30 @@ const isUserDropdownOpen = ref(false);
                     <p
                         class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-4"
                     >
-                        Account
+                        {{ __("Account") }}
                     </p>
                     <Link
                         v-if="user"
                         href="/dashboard"
                         class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <Squares2X2Icon class="w-5 h-5" /> Dashboard
+                        <Squares2X2Icon class="w-5 h-5" /> {{ __("Dashboard") }}
                     </Link>
                     <Link
                         v-if="user"
                         href="/dashboard/orders"
                         class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <ShoppingBagIcon class="w-5 h-5" /> My Orders
+                        <ShoppingBagIcon class="w-5 h-5" />
+                        {{ __("My Orders") }}
                     </Link>
                     <Link
                         v-if="user"
                         href="/dashboard/profile"
                         class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium"
                     >
-                        <UserCircleIcon class="w-5 h-5" /> Profile Settings
+                        <UserCircleIcon class="w-5 h-5" />
+                        {{ __("Profile Settings") }}
                     </Link>
                 </div>
 
@@ -368,7 +430,8 @@ const isUserDropdownOpen = ref(false);
                         as="button"
                         class="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition"
                     >
-                        <ArrowRightOnRectangleIcon class="w-5 h-5" /> Logout
+                        <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                        {{ __("Logout") }}
                     </Link>
                 </div>
             </div>
