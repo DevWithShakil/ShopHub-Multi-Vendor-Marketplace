@@ -1,0 +1,159 @@
+<script setup>
+import { ref } from "vue";
+import MainLayout from "@/Layouts/MainLayout.vue";
+import { Link, usePage } from "@inertiajs/vue3";
+import {
+    Squares2X2Icon,
+    ShoppingBagIcon,
+    UserIcon,
+    ArrowRightOnRectangleIcon,
+    Bars3Icon,
+    XMarkIcon,
+} from "@heroicons/vue/24/outline";
+
+const page = usePage();
+const showMobileMenu = ref(false);
+
+const isActive = (route) => page.url.startsWith(route);
+
+// মেনু লিংকস কনফিগারেশন
+const menuItems = [
+    { name: "Dashboard", route: "/dashboard", icon: Squares2X2Icon },
+    { name: "My Orders", route: "/dashboard/orders", icon: ShoppingBagIcon },
+    { name: "Profile Settings", route: "/dashboard/profile", icon: UserIcon },
+];
+</script>
+
+<template>
+    <MainLayout>
+        <div class="min-h-screen bg-gray-50/50">
+            <div class="container mx-auto px-4 py-8 lg:py-12">
+                <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                    <div
+                        class="lg:hidden flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold"
+                            >
+                                {{ $page.props.auth.user.name.charAt(0) }}
+                            </div>
+                            <span class="font-bold text-gray-800"
+                                >My Account</span
+                            >
+                        </div>
+                        <button
+                            @click="showMobileMenu = !showMobileMenu"
+                            class="text-gray-600 hover:text-indigo-600 transition"
+                        >
+                            <Bars3Icon v-if="!showMobileMenu" class="w-6 h-6" />
+                            <XMarkIcon v-else class="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <aside
+                        :class="[
+                            'lg:w-72 flex-shrink-0 transition-all duration-300 ease-in-out z-40',
+                            showMobileMenu
+                                ? 'fixed inset-0 bg-white p-6 z-50 overflow-y-auto'
+                                : 'hidden lg:block',
+                        ]"
+                    >
+                        <div
+                            v-if="showMobileMenu"
+                            class="flex justify-end mb-6 lg:hidden"
+                        >
+                            <button
+                                @click="showMobileMenu = false"
+                                class="p-2 bg-gray-100 rounded-full"
+                            >
+                                <XMarkIcon class="w-6 h-6 text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div
+                            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24"
+                        >
+                            <div
+                                class="p-6 border-b border-gray-50 bg-gradient-to-br from-indigo-50 to-white"
+                            >
+                                <div
+                                    class="flex flex-col items-center text-center"
+                                >
+                                    <div
+                                        class="w-20 h-20 bg-white p-1 rounded-full shadow-md mb-3"
+                                    >
+                                        <div
+                                            class="w-full h-full bg-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold"
+                                        >
+                                            {{
+                                                $page.props.auth.user.name.charAt(
+                                                    0
+                                                )
+                                            }}
+                                        </div>
+                                    </div>
+                                    <h3 class="font-bold text-gray-800 text-lg">
+                                        {{ $page.props.auth.user.name }}
+                                    </h3>
+                                    <p class="text-sm text-gray-500">
+                                        {{ $page.props.auth.user.email }}
+                                    </p>
+                                    <span
+                                        class="mt-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wide"
+                                    >
+                                        {{
+                                            $page.props.auth.user.role ||
+                                            "Customer"
+                                        }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <nav class="p-4 space-y-2">
+                                <Link
+                                    v-for="item in menuItems"
+                                    :key="item.name"
+                                    :href="item.route"
+                                    @click="showMobileMenu = false"
+                                    class="group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
+                                    :class="
+                                        isActive(item.route)
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-1'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'
+                                    "
+                                >
+                                    <component
+                                        :is="item.icon"
+                                        class="w-5 h-5 transition-transform group-hover:scale-110"
+                                    />
+                                    {{ item.name }}
+                                </Link>
+
+                                <div
+                                    class="my-4 border-t border-gray-100"
+                                ></div>
+
+                                <Link
+                                    href="/logout"
+                                    method="post"
+                                    as="button"
+                                    class="w-full group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+                                >
+                                    <ArrowRightOnRectangleIcon
+                                        class="w-5 h-5 transition-transform group-hover:-translate-x-1"
+                                    />
+                                    Logout
+                                </Link>
+                            </nav>
+                        </div>
+                    </aside>
+
+                    <main class="flex-1 w-full min-w-0">
+                        <slot />
+                    </main>
+                </div>
+            </div>
+        </div>
+    </MainLayout>
+</template>
