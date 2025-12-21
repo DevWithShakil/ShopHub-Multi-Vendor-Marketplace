@@ -65,6 +65,11 @@ class User extends Authenticatable implements FilamentUser
     return false;
 }
 
+public function vendor()
+{
+    return $this->hasOne(Vendor::class);
+}
+
     // Helpers
     public function isAdmin() { return $this->role === 'admin'; }
     public function isVendor() { return $this->role === 'vendor'; }
