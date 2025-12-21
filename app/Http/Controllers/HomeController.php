@@ -11,6 +11,7 @@ class HomeController extends Controller
     {
         $products = Product::with('category')
             ->where('is_active', true)
+            ->where('approval_status', 'approved')
             ->latest()
             ->take(8)
             ->get()

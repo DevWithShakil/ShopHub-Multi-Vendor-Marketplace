@@ -153,13 +153,36 @@ class ProductResource extends Resource
 
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Category'),
+
+                Tables\Columns\BadgeColumn::make('approval_status')
+                    ->colors([
+                        'warning' => 'pending',
+                        'success' => 'approved',
+                        'danger' => 'rejected',
+    ]),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-            ])
+                //  Approve Action
+                    Tables\Actions\Action::make('approve')
+                        ->label('Approve')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(fn (Product $record) => $record->approval_status === 'pending')
+                        ->action(fn (Product $record) => $record->update(['approval_status' => 'approved'])),
+
+                    //  Reject Action
+                    Tables\Actions\Action::make('reject')
+                        ->label('Reject')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn (Product $record) => $record->approval_status === 'pending')
+                        ->action(fn (Product $record) => $record->update(['approval_status' => 'rejected'])),
+                ])
+
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
