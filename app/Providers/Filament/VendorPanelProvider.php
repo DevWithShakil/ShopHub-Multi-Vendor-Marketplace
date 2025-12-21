@@ -6,6 +6,8 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Filament\Vendor\Widgets\VendorStatsOverview;
+use App\Filament\Vendor\Widgets\VendorSalesChart;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -37,6 +39,8 @@ class VendorPanelProvider extends PanelProvider
         ->discoverWidgets(in: app_path('Filament/Vendor/Widgets'), for: 'App\\Filament\\Vendor\\Widgets')
         ->widgets([
             Widgets\AccountWidget::class,
+            VendorStatsOverview::class,
+            VendorSalesChart::class,
         ])
         ->middleware([
             EncryptCookies::class,
