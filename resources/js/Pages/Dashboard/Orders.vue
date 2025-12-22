@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link } from "@inertiajs/vue3";
 import UserDashboardLayout from "@/Layouts/UserDashboardLayout.vue";
-import { ShoppingBagIcon } from "@heroicons/vue/24/outline";
+import { ShoppingBagIcon, EyeIcon, HomeIcon } from "@heroicons/vue/24/outline";
 
 defineProps({
     orders: Object, // Pagination Object
@@ -12,101 +12,210 @@ defineProps({
     <Head title="My Orders" />
 
     <UserDashboardLayout>
-        <div class="flex items-center justify-between mb-6">
-            <h1
-                class="text-2xl font-bold text-gray-800 flex items-center gap-2"
-            >
-                <ShoppingBagIcon class="w-7 h-7 text-indigo-600" /> My Orders
-            </h1>
-        </div>
-
         <div
-            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+            class="min-h-screen bg-[#0B0F19] p-4 lg:p-8 font-sans text-gray-200 relative overflow-hidden"
         >
-            <table class="w-full text-left text-sm">
-                <thead
-                    class="bg-gray-50 text-gray-500 border-b border-gray-200"
+            <div
+                class="absolute top-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"
+            ></div>
+            <div
+                class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"
+            ></div>
+
+            <div class="relative z-10 max-w-7xl mx-auto">
+                <div
+                    class="flex justify-between items-end mb-8 animate-fade-in-up"
                 >
-                    <tr>
-                        <th class="p-4">Invoice #</th>
-                        <th class="p-4">Date</th>
-                        <th class="p-4">Items</th>
-                        <th class="p-4">Total Amount</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr
-                        v-for="order in orders.data"
-                        :key="order.id"
-                        class="hover:bg-gray-50 transition"
+                    <div>
+                        <h1
+                            class="text-3xl font-black text-white tracking-tight mb-2 flex items-center gap-3"
+                        >
+                            <ShoppingBagIcon class="w-8 h-8 text-indigo-400" />
+                            {{ __("My Orders") }}
+                        </h1>
+                        <p class="text-gray-400 text-sm">
+                            {{
+                                __(
+                                    "Check the status of recent orders, manage returns, and download invoices."
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <Link
+                        href="/"
+                        class="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-sm font-bold text-gray-300 transition"
                     >
-                        <td class="p-4 font-mono font-bold text-indigo-600">
-                            {{ order.invoice_no }}
-                        </td>
-                        <td class="p-4 text-gray-500">
-                            {{ order.created_at }}
-                        </td>
-                        <td class="p-4 text-gray-600">
-                            {{ order.items_count }} Items
-                        </td>
-                        <td class="p-4 font-bold text-gray-800">
-                            ৳{{ order.total_amount }}
-                        </td>
-                        <td class="p-4">
-                            <span
-                                class="px-2 py-1 rounded text-xs font-bold uppercase"
-                                :class="{
-                                    'bg-yellow-100 text-yellow-700':
-                                        order.status === 'pending',
-                                    'bg-blue-100 text-blue-700':
-                                        order.status === 'processing',
-                                    'bg-green-100 text-green-700':
-                                        order.status === 'completed',
-                                    'bg-red-100 text-red-700':
-                                        order.status === 'cancelled',
-                                }"
-                            >
-                                {{ order.status }}
-                            </span>
-                        </td>
-                        <td class="p-4 text-right">
-                            <button
-                                class="text-indigo-600 hover:text-indigo-900 font-medium border px-3 py-1 rounded hover:bg-indigo-50"
-                            >
-                                View
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <HomeIcon class="w-4 h-4" /> Go Home
+                    </Link>
+                </div>
 
-            <div
-                v-if="orders.data.length === 0"
-                class="p-10 text-center text-gray-500"
-            >
-                You have no orders yet.
-            </div>
+                <div
+                    class="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 overflow-hidden shadow-2xl animate-fade-in-up"
+                >
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr
+                                    class="bg-white/5 border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider"
+                                >
+                                    <th class="p-6 font-bold">Invoice #</th>
+                                    <th class="p-6 font-bold">Date</th>
+                                    <th class="p-6 font-bold">Items</th>
+                                    <th class="p-6 font-bold">Total Amount</th>
+                                    <th class="p-6 font-bold">Status</th>
+                                    <th class="p-6 font-bold text-right">
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr
+                                    v-for="order in orders.data"
+                                    :key="order.id"
+                                    class="group hover:bg-white/5 transition-colors duration-200"
+                                >
+                                    <td class="p-6">
+                                        <span
+                                            class="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
+                                        >
+                                            #{{ order.invoice_no }}
+                                        </span>
+                                    </td>
+                                    <td
+                                        class="p-6 text-sm text-gray-300 font-medium"
+                                    >
+                                        {{
+                                            new Date(
+                                                order.created_at
+                                            ).toLocaleDateString()
+                                        }}
+                                    </td>
+                                    <td class="p-6 text-sm text-gray-400">
+                                        {{ order.items_count }} Items
+                                    </td>
+                                    <td
+                                        class="p-6 font-bold text-white text-lg"
+                                    >
+                                        ৳{{ order.total_amount }}
+                                    </td>
+                                    <td class="p-6">
+                                        <span
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm flex w-fit items-center gap-1.5"
+                                            :class="{
+                                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20':
+                                                    order.status === 'pending',
+                                                'bg-blue-500/10 text-blue-400 border-blue-500/20':
+                                                    order.status ===
+                                                    'processing',
+                                                'bg-green-500/10 text-green-400 border-green-500/20':
+                                                    order.status ===
+                                                    'completed',
+                                                'bg-rose-500/10 text-rose-400 border-rose-500/20':
+                                                    order.status ===
+                                                    'cancelled',
+                                            }"
+                                        >
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full"
+                                                :class="{
+                                                    'bg-yellow-400':
+                                                        order.status ===
+                                                        'pending',
+                                                    'bg-blue-400':
+                                                        order.status ===
+                                                        'processing',
+                                                    'bg-green-400':
+                                                        order.status ===
+                                                        'completed',
+                                                    'bg-rose-400':
+                                                        order.status ===
+                                                        'cancelled',
+                                                }"
+                                            ></span>
+                                            {{ order.status }}
+                                        </span>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <Link
+                                            href="#"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
+                                        >
+                                            <EyeIcon class="w-4 h-4" /> View
+                                        </Link>
+                                    </td>
+                                </tr>
 
-            <div
-                v-if="orders.links.length > 3"
-                class="p-4 border-t border-gray-100 flex justify-center gap-2"
-            >
-                <Link
-                    v-for="(link, k) in orders.links"
-                    :key="k"
-                    :href="link.url"
-                    v-html="link.label"
-                    class="px-3 py-1 border rounded text-sm"
-                    :class="
-                        link.active
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-white text-gray-600 hover:bg-gray-50'
-                    "
-                    :disabled="!link.url"
-                />
+                                <tr v-if="orders.data.length === 0">
+                                    <td colspan="6" class="p-16 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10"
+                                            >
+                                                <ShoppingBagIcon
+                                                    class="w-10 h-10 text-gray-500"
+                                                />
+                                            </div>
+                                            <h3
+                                                class="text-xl font-bold text-white mb-2"
+                                            >
+                                                {{ __("No orders found") }}
+                                            </h3>
+                                            <p class="text-gray-400 mb-6">
+                                                {{
+                                                    __(
+                                                        "Looks like you haven't placed any orders yet."
+                                                    )
+                                                }}
+                                            </p>
+                                            <Link
+                                                href="/"
+                                                class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-indigo-500/30"
+                                            >
+                                                {{ __("Start Shopping") }}
+                                            </Link>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div
+                        v-if="orders.links.length > 3"
+                        class="p-6 border-t border-white/10 flex justify-center gap-2 bg-black/20"
+                    >
+                        <Link
+                            v-for="(link, k) in orders.links"
+                            :key="k"
+                            :href="link.url"
+                            v-html="link.label"
+                            class="px-4 py-2 rounded-lg text-sm font-bold transition-all border"
+                            :class="
+                                link.active
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-500/30'
+                                    : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white'
+                            "
+                            :preserve-scroll="true"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </UserDashboardLayout>
 </template>
+
+<style scoped>
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
