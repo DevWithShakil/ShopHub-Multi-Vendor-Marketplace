@@ -8,27 +8,23 @@ import {
     XMarkIcon,
     HeartIcon,
     PhoneIcon,
-    DevicePhoneMobileIcon,
+    EnvelopeIcon,
     ChevronDownIcon,
     ArrowRightOnRectangleIcon,
     Squares2X2Icon,
     UserCircleIcon,
     LanguageIcon,
-    EnvelopeIcon,
-    MapPinIcon,
+    TruckIcon,
+    ShieldCheckIcon,
 } from "@heroicons/vue/24/outline";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
 
-// 1. Initialize Stores
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
 const page = usePage();
-
-// 2. Computed User
 const user = computed(() => page.props.auth.user);
 
-// 3. Sync Wishlist on Load
 onMounted(() => {
     if (page.props.auth?.wishlist_ids) {
         wishlistStore.setWishlist(page.props.auth.wishlist_ids);
@@ -40,36 +36,11 @@ const isUserDropdownOpen = ref(false);
 </script>
 
 <template>
-    <div class="min-h-screen font-sans text-gray-800 bg-gray-50 flex flex-col">
-        <div
-            class="bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 text-white text-xs py-2.5 hidden md:block border-b border-white/10"
-        >
-            <div
-                class="container mx-auto px-4 lg:px-8 flex justify-between items-center"
-            >
-                <div
-                    class="flex gap-6 opacity-80 hover:opacity-100 transition-opacity"
-                >
-                    <span class="flex items-center gap-1.5 cursor-pointer">
-                        <PhoneIcon class="w-3.5 h-3.5" /> +880 1568-013150
-                    </span>
-                    <span class="flex items-center gap-1.5 cursor-pointer">
-                        <EnvelopeIcon class="w-3.5 h-3.5" /> support@shophub.com
-                    </span>
-                </div>
-                <div class="flex gap-6 opacity-80">
-                    <Link href="#" class="hover:text-indigo-300 transition">{{
-                        __("Sell on ShopHub")
-                    }}</Link>
-                    <Link href="#" class="hover:text-indigo-300 transition">{{
-                        __("Track Order")
-                    }}</Link>
-                </div>
-            </div>
-        </div>
-
+    <div
+        class="min-h-screen font-sans text-gray-200 bg-[#0B0F19] flex flex-col"
+    >
         <nav
-            class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm transition-all duration-300"
+            class="sticky top-0 z-50 bg-[#0B0F19]/80 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20 transition-all duration-300"
         >
             <div class="container mx-auto px-4 lg:px-8">
                 <div
@@ -77,16 +48,16 @@ const isUserDropdownOpen = ref(false);
                 >
                     <Link
                         href="/"
-                        class="flex-shrink-0 flex items-center gap-2 group"
+                        class="flex-shrink-0 flex items-center gap-3 group"
                     >
                         <div
-                            class="bg-gradient-to-tr from-indigo-600 to-purple-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300"
+                            class="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-300"
                         >
                             <ShoppingBagIcon class="w-6 h-6" />
                         </div>
                         <div class="flex flex-col">
                             <span
-                                class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight leading-none"
+                                class="text-2xl font-black text-white tracking-tight leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 transition-all duration-300"
                                 >ShopHub</span
                             >
                             <span
@@ -100,10 +71,10 @@ const isUserDropdownOpen = ref(false);
                         <input
                             type="text"
                             :placeholder="__('Search for products...')"
-                            class="w-full bg-slate-100/50 border border-slate-200 rounded-full py-3 pl-5 pr-14 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner"
+                            class="w-full bg-black/20 border border-white/10 rounded-full py-3 pl-5 pr-14 text-sm text-white placeholder-gray-500 focus:bg-black/40 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-inner"
                         />
                         <button
-                            class="absolute right-1.5 top-1.5 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors shadow-md"
+                            class="absolute right-1.5 top-1.5 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-900/50 group-focus-within:scale-105"
                         >
                             <MagnifyingGlassIcon class="w-5 h-5" />
                         </button>
@@ -111,15 +82,15 @@ const isUserDropdownOpen = ref(false);
 
                     <div class="flex items-center gap-3 md:gap-6">
                         <div
-                            class="hidden md:flex items-center bg-slate-100 rounded-full p-1 border border-slate-200"
+                            class="hidden md:flex items-center bg-white/5 rounded-full p-1 border border-white/10"
                         >
                             <a
                                 href="/language/bn"
                                 class="px-3 py-1 text-xs font-bold rounded-full transition-all"
                                 :class="
                                     $page.props.locale === 'bn'
-                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-900'
+                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-white'
                                 "
                                 >BN</a
                             >
@@ -128,8 +99,8 @@ const isUserDropdownOpen = ref(false);
                                 class="px-3 py-1 text-xs font-bold rounded-full transition-all"
                                 :class="
                                     $page.props.locale === 'en'
-                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-900'
+                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-white'
                                 "
                                 >EN</a
                             >
@@ -137,14 +108,14 @@ const isUserDropdownOpen = ref(false);
 
                         <button
                             @click="isMobileMenuOpen = true"
-                            class="md:hidden text-gray-700 hover:bg-slate-100 p-2 rounded-lg transition"
+                            class="md:hidden text-gray-300 hover:text-white p-2 rounded-lg transition hover:bg-white/10"
                         >
                             <Bars3Icon class="w-7 h-7" />
                         </button>
 
                         <Link
                             :href="route('wishlist.index')"
-                            class="hidden md:flex flex-col items-center text-gray-500 hover:text-rose-500 transition group relative"
+                            class="hidden md:flex flex-col items-center text-gray-400 hover:text-rose-500 transition-colors duration-300 group relative"
                         >
                             <div class="relative p-1">
                                 <HeartIcon
@@ -152,7 +123,7 @@ const isUserDropdownOpen = ref(false);
                                 />
                                 <span
                                     v-if="wishlistStore.count > 0"
-                                    class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-pulse border border-white"
+                                    class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-pulse border border-[#0B0F19]"
                                 >
                                     {{ wishlistStore.count }}
                                 </span>
@@ -161,7 +132,7 @@ const isUserDropdownOpen = ref(false);
 
                         <Link
                             :href="route('cart.index')"
-                            class="flex flex-col items-center text-gray-500 hover:text-indigo-600 transition group relative"
+                            class="flex flex-col items-center text-gray-400 hover:text-indigo-400 transition-colors duration-300 group relative"
                         >
                             <div class="relative p-1">
                                 <ShoppingBagIcon
@@ -169,7 +140,7 @@ const isUserDropdownOpen = ref(false);
                                 />
                                 <span
                                     v-if="cartStore.itemCount > 0"
-                                    class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-bounce border border-white"
+                                    class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-bounce border border-[#0B0F19]"
                                 >
                                     {{ cartStore.itemCount }}
                                 </span>
@@ -182,42 +153,43 @@ const isUserDropdownOpen = ref(false);
                                     @click="
                                         isUserDropdownOpen = !isUserDropdownOpen
                                     "
-                                    class="flex items-center gap-3 hover:bg-slate-50 pl-1 pr-3 py-1 rounded-full transition border border-transparent hover:border-slate-200 group"
+                                    class="flex items-center gap-3 hover:bg-white/5 pl-1 pr-3 py-1 rounded-full transition border border-transparent hover:border-white/10 group"
                                 >
                                     <img
                                         :src="
                                             user.profile_photo_url ||
                                             `https://ui-avatars.com/api/?name=${user.name}&background=4f46e5&color=fff`
                                         "
-                                        class="w-9 h-9 rounded-full border-2 border-white shadow-sm"
+                                        class="w-9 h-9 rounded-full border-2 border-white/10 shadow-sm object-cover"
                                         alt="Avatar"
                                     />
                                     <div class="text-left hidden lg:block">
                                         <p
-                                            class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"
+                                            class="text-[10px] font-bold text-gray-500 uppercase tracking-wider"
                                         >
                                             {{ __("Hello") }}
                                         </p>
                                         <p
-                                            class="text-sm font-bold text-gray-800 leading-none group-hover:text-indigo-600 transition"
+                                            class="text-sm font-bold text-gray-200 leading-none group-hover:text-indigo-400 transition"
                                         >
                                             {{ user.name.split(" ")[0] }}
                                         </p>
                                     </div>
                                     <ChevronDownIcon
-                                        class="w-4 h-4 text-gray-400 group-hover:rotate-180 transition-transform duration-300"
+                                        class="w-4 h-4 text-gray-500 group-hover:text-white group-hover:rotate-180 transition-transform duration-300"
                                     />
                                 </button>
 
                                 <div
                                     v-if="isUserDropdownOpen"
-                                    class="absolute right-0 mt-4 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in-up origin-top-right"
+                                    @mouseleave="isUserDropdownOpen = false"
+                                    class="absolute right-0 mt-4 w-64 bg-[#151925] rounded-2xl shadow-2xl border border-white/10 py-2 z-50 animate-fade-in-up origin-top-right backdrop-blur-xl"
                                 >
                                     <div
-                                        class="px-5 py-4 border-b border-gray-50 bg-slate-50/50"
+                                        class="px-5 py-4 border-b border-white/5 bg-white/5"
                                     >
                                         <p
-                                            class="text-sm font-bold text-gray-900 truncate"
+                                            class="text-sm font-bold text-white truncate"
                                         >
                                             {{ user.name }}
                                         </p>
@@ -229,26 +201,26 @@ const isUserDropdownOpen = ref(false);
                                     </div>
                                     <Link
                                         href="/dashboard"
-                                        class="flex items-center gap-3 px-5 py-3 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                        class="flex items-center gap-3 px-5 py-3 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
                                     >
                                         <Squares2X2Icon class="w-4 h-4" />
                                         {{ __("Dashboard") }}
                                     </Link>
                                     <Link
                                         href="/dashboard/orders"
-                                        class="flex items-center gap-3 px-5 py-3 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                        class="flex items-center gap-3 px-5 py-3 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
                                     >
                                         <ShoppingBagIcon class="w-4 h-4" />
                                         {{ __("My Orders") }}
                                     </Link>
                                     <div
-                                        class="border-t border-gray-50 my-1"
+                                        class="border-t border-white/5 my-1"
                                     ></div>
                                     <Link
                                         href="/logout"
                                         method="post"
                                         as="button"
-                                        class="w-full text-left flex items-center gap-3 px-5 py-3 text-sm text-rose-500 hover:bg-rose-50 transition-colors"
+                                        class="w-full text-left flex items-center gap-3 px-5 py-3 text-sm text-rose-500 hover:bg-rose-500/10 transition-colors"
                                     >
                                         <ArrowRightOnRectangleIcon
                                             class="w-4 h-4"
@@ -258,15 +230,15 @@ const isUserDropdownOpen = ref(false);
                                 </div>
                             </div>
 
-                            <div v-else class="flex items-center gap-2">
+                            <div v-else class="flex items-center gap-3">
                                 <Link
                                     href="/login"
-                                    class="text-gray-600 font-bold hover:text-indigo-600 text-sm px-3 py-2 hover:bg-slate-50 rounded-lg transition"
+                                    class="text-gray-400 font-bold hover:text-white text-sm px-4 py-2 hover:bg-white/5 rounded-lg transition-colors"
                                     >{{ __("Login") }}</Link
                                 >
                                 <Link
                                     href="/register"
-                                    class="bg-black text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-gray-800 transition shadow-lg shadow-gray-200"
+                                    class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-bold text-sm hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-white/10"
                                     >{{ __("Register") }}</Link
                                 >
                             </div>
@@ -279,10 +251,10 @@ const isUserDropdownOpen = ref(false);
                         <input
                             type="text"
                             :placeholder="__('Search for products...')"
-                            class="w-full bg-slate-100 rounded-xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-indigo-500/20 border-none"
+                            class="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-500"
                         />
                         <MagnifyingGlassIcon
-                            class="w-5 h-5 text-gray-400 absolute left-4 top-3"
+                            class="w-5 h-5 text-gray-500 absolute left-4 top-3"
                         />
                     </div>
                 </div>
@@ -292,18 +264,17 @@ const isUserDropdownOpen = ref(false);
         <div v-if="isMobileMenuOpen" class="relative z-[60]">
             <div
                 @click="isMobileMenuOpen = false"
-                class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             ></div>
             <div
-                class="fixed inset-y-0 left-0 w-4/5 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col"
+                class="fixed inset-y-0 left-0 w-4/5 max-w-xs bg-[#0F131F] shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col border-r border-white/10"
             >
                 <div
-                    class="bg-gradient-to-br from-slate-900 to-indigo-900 p-6 text-white relative overflow-hidden"
+                    class="bg-gradient-to-br from-slate-900 to-indigo-900 p-6 text-white relative overflow-hidden border-b border-white/10"
                 >
                     <div
                         class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"
                     ></div>
-
                     <div
                         v-if="user"
                         class="flex items-center gap-4 relative z-10"
@@ -313,14 +284,16 @@ const isUserDropdownOpen = ref(false);
                                 user.profile_photo_url ||
                                 `https://ui-avatars.com/api/?name=${user.name}&background=fff&color=4f46e5`
                             "
-                            class="w-14 h-14 rounded-full border-2 border-white/50 shadow-md"
+                            class="w-14 h-14 rounded-full border-2 border-white/20 shadow-md object-cover"
                             alt="Avatar"
                         />
                         <div>
                             <p class="font-bold text-lg leading-tight">
                                 {{ user.name }}
                             </p>
-                            <p class="text-xs text-indigo-200 mt-1">
+                            <p
+                                class="text-xs text-indigo-200 mt-1 truncate max-w-[150px]"
+                            >
                                 {{ user.email }}
                             </p>
                         </div>
@@ -352,13 +325,13 @@ const isUserDropdownOpen = ref(false);
 
                 <div class="flex-1 overflow-y-auto p-5 space-y-2">
                     <div
-                        class="flex items-center justify-between px-4 py-3 mb-6 bg-slate-50 rounded-xl border border-slate-100"
+                        class="flex items-center justify-between px-4 py-3 mb-6 bg-white/5 rounded-xl border border-white/10"
                     >
-                        <div class="flex items-center gap-2 text-slate-600">
+                        <div class="flex items-center gap-2 text-gray-400">
                             <LanguageIcon class="w-5 h-5" />
                             <span class="text-sm font-bold">Language</span>
                         </div>
-                        <div class="flex bg-white rounded-lg p-1 shadow-sm">
+                        <div class="flex bg-black/20 rounded-lg p-1">
                             <a
                                 href="/language/bn"
                                 class="px-3 py-1 text-xs font-bold rounded-md transition"
@@ -383,19 +356,19 @@ const isUserDropdownOpen = ref(false);
                     </div>
 
                     <p
-                        class="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 pb-2"
+                        class="text-xs font-bold text-gray-500 uppercase tracking-wider px-2 pb-2"
                     >
                         {{ __("Menu") }}
                     </p>
                     <Link
                         href="/"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-white font-medium transition"
                         ><ShoppingBagIcon class="w-5 h-5" />
                         {{ __("Home") }}</Link
                     >
                     <Link
                         :href="route('wishlist.index')"
-                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-700 hover:bg-rose-50 hover:text-rose-600 font-medium transition"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-rose-500 font-medium transition"
                     >
                         <div class="flex items-center gap-4">
                             <HeartIcon class="w-5 h-5" /> {{ __("Wishlist") }}
@@ -408,7 +381,7 @@ const isUserDropdownOpen = ref(false);
                     </Link>
                     <Link
                         :href="route('cart.index')"
-                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition"
+                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-indigo-400 font-medium transition"
                     >
                         <div class="flex items-center gap-4">
                             <ShoppingBagIcon class="w-5 h-5" /> {{ __("Cart") }}
@@ -420,11 +393,11 @@ const isUserDropdownOpen = ref(false);
                         >
                     </Link>
 
-                    <div class="my-4 border-t border-gray-100"></div>
+                    <div class="my-4 border-t border-white/10"></div>
                     <Link
                         v-if="user"
                         href="/dashboard"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-white font-medium transition"
                         ><Squares2X2Icon class="w-5 h-5" />
                         {{ __("Dashboard") }}</Link
                     >
@@ -433,7 +406,7 @@ const isUserDropdownOpen = ref(false);
                         href="/logout"
                         method="post"
                         as="button"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-50 font-medium transition w-full"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 font-medium transition w-full"
                         ><ArrowRightOnRectangleIcon class="w-5 h-5" />
                         {{ __("Logout") }}</Link
                     >
@@ -446,7 +419,7 @@ const isUserDropdownOpen = ref(false);
         </main>
 
         <footer
-            class="bg-[#0B0F19] text-white pt-20 pb-10 border-t border-white/5 mt-auto"
+            class="bg-[#0B0F19] text-white pt-20 pb-10 border-t border-white/5 mt-auto relative z-10"
         >
             <div class="container mx-auto px-6 lg:px-12">
                 <div
@@ -460,20 +433,33 @@ const isUserDropdownOpen = ref(false);
                                 <ShoppingBagIcon class="w-6 h-6" />
                             </div>
                             <span
-                                class="text-2xl font-black tracking-tight text-white"
+                                class="text-2xl font-black tracking-tight text-white group-hover:text-indigo-400 transition"
                                 >ShopHub</span
                             >
                         </Link>
                         <p class="text-gray-400 leading-relaxed text-sm">
                             The premium destination for all your shopping needs.
-                            We ensure quality, speed, and trust in every order.
                         </p>
+
+                        <div class="space-y-2 pt-2">
+                            <p
+                                class="flex items-center gap-3 text-gray-400 text-sm hover:text-white transition"
+                            >
+                                <PhoneIcon class="w-4 h-4 text-indigo-500" />
+                                +880 1568-013150
+                            </p>
+                            <p
+                                class="flex items-center gap-3 text-gray-400 text-sm hover:text-white transition"
+                            >
+                                <EnvelopeIcon class="w-4 h-4 text-indigo-500" />
+                                support@shophub.com
+                            </p>
+                        </div>
 
                         <div class="flex items-center gap-4 pt-2">
                             <div
                                 class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-indigo-600 transition cursor-pointer text-gray-400 hover:text-white"
                             >
-                                <i class="fa-brands fa-facebook-f text-lg"></i>
                                 <span class="font-bold text-xs">FB</span>
                             </div>
                             <div
@@ -523,8 +509,8 @@ const isUserDropdownOpen = ref(false);
                             <li>
                                 <Link
                                     href="#"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
-                                    >Accessories</Link
+                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block font-bold text-white"
+                                    >{{ __("Sell on ShopHub") }}</Link
                                 >
                             </li>
                         </ul>
@@ -542,16 +528,16 @@ const isUserDropdownOpen = ref(false);
                         <ul class="space-y-4 text-sm text-gray-400">
                             <li>
                                 <Link
-                                    href="#"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
-                                    >Help Center</Link
+                                    href="/dashboard/orders"
+                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block font-bold text-white"
+                                    >{{ __("Track Order") }}</Link
                                 >
                             </li>
                             <li>
                                 <Link
                                     href="#"
                                     class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
-                                    >Order Tracking</Link
+                                    >Help Center</Link
                                 >
                             </li>
                             <li>
@@ -572,7 +558,7 @@ const isUserDropdownOpen = ref(false);
                     </div>
 
                     <div
-                        class="bg-white/5 p-6 rounded-2xl border border-white/5"
+                        class="bg-white/5 p-6 rounded-2xl border border-white/5 backdrop-blur-sm"
                     >
                         <h4 class="text-white font-bold text-lg mb-4">
                             {{ __("Stay in the loop") }}
@@ -607,25 +593,24 @@ const isUserDropdownOpen = ref(false);
                     <p class="text-gray-500 text-xs font-medium">
                         &copy; 2025 ShopHub Bangladesh. All rights reserved.
                     </p>
-
                     <div
                         class="flex gap-4 opacity-70 grayscale hover:grayscale-0 transition duration-500"
                     >
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png"
-                            class="h-4 object-contain"
-                            alt="Visa"
-                        />
-                        <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png"
-                            class="h-6 object-contain"
-                            alt="Mastercard"
-                        />
-                        <img
-                            src="https://freepnglogo.com/images/all_img/1701670291bKash-App-Logo-PNG.png"
-                            class="h-6 object-contain"
-                            alt="Bkash"
-                        />
+                        <div
+                            class="h-6 w-10 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-500"
+                        >
+                            VISA
+                        </div>
+                        <div
+                            class="h-6 w-10 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-500"
+                        >
+                            MC
+                        </div>
+                        <div
+                            class="h-6 w-10 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-500"
+                        >
+                            BKASH
+                        </div>
                     </div>
                 </div>
             </div>
