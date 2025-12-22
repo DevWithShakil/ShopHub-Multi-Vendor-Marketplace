@@ -11,12 +11,13 @@ import {
     ShieldCheckIcon,
     LockClosedIcon,
     TicketIcon,
+    HomeIcon,
 } from "@heroicons/vue/24/outline";
 
 const cartStore = useCartStore();
 const page = usePage();
 
-// ✅ নামের JSON ফরম্যাট ঠিক করার ফাংশন
+// ✅ JSON Name Helper
 const getLocalizedName = (name) => {
     try {
         const parsed =
@@ -38,18 +39,46 @@ const getLocalizedName = (name) => {
     <Head title="My Cart" />
 
     <MainLayout>
-        <div class="min-h-screen bg-[#FAFAFA] py-12 font-sans text-gray-800">
-            <div class="container mx-auto px-4 lg:px-8 max-w-7xl">
-                <div class="flex items-center justify-between mb-8">
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
-                        {{ __("Shopping Cart") }}
-                        <span class="text-base font-normal text-gray-500 ml-2"
-                            >({{ cartStore.itemCount }} {{ __("items") }})</span
+        <div
+            class="min-h-screen bg-[#0B0F19] py-12 relative overflow-hidden font-sans text-gray-200"
+        >
+            <div
+                class="absolute top-0 left-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none"
+            ></div>
+            <div
+                class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none"
+            ></div>
+
+            <div class="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
+                <div
+                    class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4"
+                >
+                    <div>
+                        <div
+                            class="flex items-center gap-2 text-sm text-gray-400 mb-2"
                         >
-                    </h1>
+                            <Link href="/" class="hover:text-white transition"
+                                ><HomeIcon class="w-4 h-4"
+                            /></Link>
+                            <span>/</span>
+                            <span class="text-white font-bold">{{
+                                __("Shopping Cart")
+                            }}</span>
+                        </div>
+                        <h1
+                            class="text-3xl font-black text-white tracking-tight flex items-center gap-3"
+                        >
+                            {{ __("Your Cart") }}
+                            <span
+                                class="text-sm font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20"
+                            >
+                                {{ cartStore.itemCount }} {{ __("Items") }}
+                            </span>
+                        </h1>
+                    </div>
                     <Link
                         href="/"
-                        class="hidden md:flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition"
+                        class="hidden md:flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-white transition bg-white/5 px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/10"
                     >
                         <ArrowLeftIcon class="w-4 h-4" />
                         {{ __("Continue Shopping") }}
@@ -58,75 +87,62 @@ const getLocalizedName = (name) => {
 
                 <div
                     v-if="cartStore.items.length === 0"
-                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center"
+                    class="flex flex-col items-center justify-center py-24 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 text-center"
                 >
                     <div
-                        class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6"
+                        class="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse border border-indigo-500/20"
                     >
-                        <ShoppingBagIcon class="w-10 h-10 text-gray-400" />
+                        <ShoppingBagIcon class="w-10 h-10 text-indigo-400" />
                     </div>
-                    <h2 class="text-xl font-bold text-gray-900 mb-2">
+                    <h2 class="text-2xl font-bold text-white mb-2">
                         {{ __("Your cart is empty") }}
                     </h2>
-                    <p class="text-gray-500 mb-8">
-                        {{ __("Looks like you haven't added anything yet.") }}
+                    <p class="text-gray-400 mb-8 max-w-md">
+                        {{
+                            __(
+                                "Looks like you haven't added anything to your cart yet. Explore our products and find something you love."
+                            )
+                        }}
                     </p>
                     <Link
                         href="/"
-                        class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                        class="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-500 hover:text-white transition shadow-lg flex items-center gap-2"
                     >
+                        <ArrowLeftIcon class="w-5 h-5" />
                         {{ __("Start Shopping") }}
                     </Link>
                 </div>
 
                 <div v-else class="flex flex-col lg:flex-row gap-8 items-start">
-                    <div
-                        class="flex-1 w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-                    >
+                    <div class="flex-1 w-full space-y-6">
                         <div
-                            class="hidden md:grid grid-cols-12 gap-4 border-b border-gray-100 bg-gray-50/50 px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                            v-for="item in cartStore.items"
+                            :key="item.cartId"
+                            class="bg-white/5 backdrop-blur-sm p-5 rounded-3xl border border-white/10 flex flex-col sm:flex-row items-center gap-6 group hover:border-indigo-500/30 transition-all duration-300"
                         >
-                            <div class="col-span-6">{{ __("Product") }}</div>
-                            <div class="col-span-3 text-center">
-                                {{ __("Quantity") }}
-                            </div>
-                            <div class="col-span-3 text-right">
-                                {{ __("Total") }}
-                            </div>
-                        </div>
-
-                        <div class="divide-y divide-gray-100">
                             <div
-                                v-for="item in cartStore.items"
-                                :key="item.cartId"
-                                class="p-6 md:grid md:grid-cols-12 md:gap-4 md:items-center flex flex-col gap-4"
+                                class="w-28 h-28 bg-white rounded-2xl p-3 flex-shrink-0 border border-white/10 relative overflow-hidden"
                             >
-                                <div class="col-span-6 flex gap-4">
-                                    <Link
-                                        :href="
-                                            route(
-                                                'product.details',
-                                                item.slug || '#'
-                                            )
-                                        "
-                                        class="block w-20 h-20 md:w-24 md:h-24 bg-gray-50 rounded-lg border border-gray-100 flex-shrink-0 p-2"
-                                    >
-                                        <img
-                                            :src="
-                                                item.image
-                                                    ? `/storage/${item.image}`
-                                                    : 'https://placehold.co/400x400'
-                                            "
-                                            class="w-full h-full object-contain mix-blend-multiply"
-                                            :alt="getLocalizedName(item.name)"
-                                        />
-                                    </Link>
+                                <img
+                                    :src="
+                                        item.image
+                                            ? `/storage/${item.image}`
+                                            : 'https://placehold.co/400x400'
+                                    "
+                                    class="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                                    :alt="getLocalizedName(item.name)"
+                                />
+                            </div>
 
-                                    <div class="flex flex-col justify-center">
+                            <div class="flex-1 w-full text-center sm:text-left">
+                                <div
+                                    class="flex flex-col sm:flex-row justify-between items-start gap-4"
+                                >
+                                    <div>
                                         <p
-                                            class="text-xs text-gray-500 mb-1 uppercase"
+                                            class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1"
                                         >
-                                            {{ item.category || "Item" }}
+                                            {{ item.category || "Product" }}
                                         </p>
                                         <Link
                                             :href="
@@ -135,37 +151,45 @@ const getLocalizedName = (name) => {
                                                     item.slug || '#'
                                                 )
                                             "
-                                            class="font-bold text-gray-900 text-base hover:text-indigo-600 transition line-clamp-2"
                                         >
-                                            {{ getLocalizedName(item.name) }}
+                                            <h3
+                                                class="font-bold text-lg text-white hover:text-indigo-400 transition leading-tight mb-2"
+                                            >
+                                                {{
+                                                    getLocalizedName(item.name)
+                                                }}
+                                            </h3>
                                         </Link>
 
                                         <div
                                             v-if="item.variant"
-                                            class="flex flex-wrap gap-2 mt-1"
+                                            class="flex flex-wrap justify-center sm:justify-start gap-2"
                                         >
                                             <span
                                                 v-for="(val, key) in item
                                                     .variant.attributes"
                                                 :key="key"
-                                                class="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200"
+                                                class="bg-white/5 text-gray-400 text-xs px-2 py-1 rounded border border-white/10"
                                             >
-                                                {{ key }}: {{ val }}
+                                                {{ key }}:
+                                                <span
+                                                    class="text-white font-bold"
+                                                    >{{ val }}</span
+                                                >
                                             </span>
                                         </div>
-                                        <p
-                                            class="md:hidden text-indigo-600 font-bold mt-2"
-                                        >
-                                            ৳{{ item.price }}
-                                        </p>
                                     </div>
+
+                                    <p class="text-2xl font-black text-white">
+                                        ৳{{ item.price * item.quantity }}
+                                    </p>
                                 </div>
 
                                 <div
-                                    class="col-span-3 flex justify-between md:justify-center items-center"
+                                    class="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-white/10 gap-4"
                                 >
                                     <div
-                                        class="flex items-center border border-gray-200 rounded-lg"
+                                        class="flex items-center bg-white/5 rounded-xl border border-white/10 p-1"
                                     >
                                         <button
                                             @click="
@@ -175,21 +199,19 @@ const getLocalizedName = (name) => {
                                                           item.cartId
                                                       )
                                             "
-                                            class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"
+                                            class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-white/10 hover:text-rose-500 transition"
                                         >
-                                            <MinusIcon class="w-3 h-3" />
+                                            <MinusIcon class="w-4 h-4" />
                                         </button>
-                                        <input
-                                            type="text"
-                                            readonly
-                                            :value="item.quantity"
-                                            class="w-10 text-center text-sm font-semibold border-none p-0 focus:ring-0 text-gray-900"
-                                        />
+                                        <span
+                                            class="w-10 text-center font-bold text-white"
+                                            >{{ item.quantity }}</span
+                                        >
                                         <button
                                             @click="item.quantity++"
-                                            class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"
+                                            class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-white/10 hover:text-green-500 transition"
                                         >
-                                            <PlusIcon class="w-3 h-3" />
+                                            <PlusIcon class="w-4 h-4" />
                                         </button>
                                     </div>
 
@@ -199,104 +221,118 @@ const getLocalizedName = (name) => {
                                                 item.cartId
                                             )
                                         "
-                                        class="md:hidden text-red-500 p-2"
+                                        class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-rose-500 transition-colors"
                                     >
-                                        <TrashIcon class="w-5 h-5" />
-                                    </button>
-                                </div>
-
-                                <div
-                                    class="col-span-3 text-right hidden md:block"
-                                >
-                                    <p class="text-lg font-bold text-gray-900">
-                                        ৳{{ item.price * item.quantity }}
-                                    </p>
-                                    <button
-                                        @click="
-                                            cartStore.removeFromCart(
-                                                item.cartId
-                                            )
-                                        "
-                                        class="text-xs text-red-500 hover:text-red-700 hover:underline mt-1 inline-flex items-center gap-1 transition"
-                                    >
-                                        <TrashIcon class="w-3 h-3" />
+                                        <TrashIcon class="w-4 h-4" />
                                         {{ __("Remove") }}
                                     </button>
                                 </div>
                             </div>
                         </div>
+
+                        <Link
+                            href="/"
+                            class="md:hidden flex justify-center items-center gap-2 text-sm font-bold text-indigo-400 hover:text-white py-4"
+                        >
+                            <ArrowLeftIcon class="w-4 h-4" />
+                            {{ __("Continue Shopping") }}
+                        </Link>
                     </div>
 
-                    <div class="lg:w-96 xl:w-[450px] flex-shrink-0">
+                    <div class="lg:w-96 xl:w-[420px] flex-shrink-0">
                         <div
-                            class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24"
+                            class="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 sticky top-24 shadow-xl shadow-black/20"
                         >
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                            <h3
+                                class="text-xl font-bold text-white mb-6 flex items-center gap-2"
+                            >
+                                <TicketIcon class="w-5 h-5 text-indigo-400" />
                                 {{ __("Order Summary") }}
                             </h3>
 
                             <div class="flex gap-2 mb-6">
-                                <input
-                                    type="text"
-                                    :placeholder="__('Promo Code')"
-                                    class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                />
+                                <div class="relative flex-1">
+                                    <input
+                                        type="text"
+                                        :placeholder="__('Promo Code')"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
+                                    />
+                                </div>
                                 <button
-                                    class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black transition"
+                                    class="bg-white text-gray-900 px-5 rounded-xl text-sm font-bold hover:bg-indigo-500 hover:text-white transition"
                                 >
                                     {{ __("Apply") }}
                                 </button>
                             </div>
 
                             <div
-                                class="space-y-3 text-sm text-gray-600 pb-4 border-b border-gray-100"
+                                class="space-y-4 text-sm text-gray-400 pb-6 border-b border-white/10"
                             >
                                 <div class="flex justify-between">
                                     <span>{{ __("Subtotal") }}</span>
-                                    <span class="font-medium text-gray-900"
+                                    <span class="font-bold text-white"
                                         >৳{{ cartStore.totalPrice }}</span
                                     >
                                 </div>
                                 <div class="flex justify-between">
-                                    <span>{{ __("Shipping") }}</span>
-                                    <span class="font-medium text-gray-900"
+                                    <span>{{ __("Shipping Estimate") }}</span>
+                                    <span class="font-bold text-white"
                                         >৳120</span
                                     >
                                 </div>
                                 <div
-                                    class="flex justify-between text-green-600"
+                                    class="flex justify-between text-green-400"
                                 >
                                     <span>{{ __("Discount") }}</span>
-                                    <span>-৳0</span>
+                                    <span class="font-bold">-৳0</span>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between items-center py-4">
-                                <span class="font-bold text-gray-900">{{
-                                    __("Total")
+                            <div class="flex justify-between items-end py-6">
+                                <span class="text-gray-400 font-medium">{{
+                                    __("Total Amount")
                                 }}</span>
-                                <span class="text-2xl font-bold text-indigo-600"
+                                <span class="text-3xl font-black text-white"
                                     >৳{{ cartStore.totalPrice + 120 }}</span
                                 >
                             </div>
 
                             <Link
                                 :href="route('checkout.index')"
-                                class="w-full block bg-indigo-600 hover:bg-indigo-700 text-white text-center font-bold py-3.5 rounded-lg shadow-sm transition-all duration-200 flex justify-center items-center gap-2"
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-bold py-4 rounded-xl shadow-lg shadow-indigo-600/20 transform transition-all active:scale-95 flex justify-center items-center gap-2 group"
                             >
-                                <LockClosedIcon class="w-4 h-4" />
+                                <LockClosedIcon
+                                    class="w-5 h-5 group-hover:scale-110 transition-transform"
+                                />
                                 {{ __("Proceed to Checkout") }}
                             </Link>
 
-                            <div
-                                class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400"
-                            >
-                                <ShieldCheckIcon
-                                    class="w-4 h-4 text-green-500"
-                                />
-                                <span>{{
-                                    __("Guaranteed Safe Checkout")
-                                }}</span>
+                            <div class="mt-6 flex flex-col items-center gap-4">
+                                <div
+                                    class="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20"
+                                >
+                                    <ShieldCheckIcon class="w-4 h-4" />
+                                    100% {{ __("Secure Payment") }}
+                                </div>
+                                <div
+                                    class="flex gap-3 opacity-60 grayscale hover:grayscale-0 transition-all duration-300"
+                                >
+                                    <img
+                                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png"
+                                        class="h-5 object-contain"
+                                        alt="Visa"
+                                    />
+                                    <img
+                                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png"
+                                        class="h-7 object-contain"
+                                        alt="Mastercard"
+                                    />
+                                    <img
+                                        src="https://freepnglogo.com/images/all_img/1701670291bKash-App-Logo-PNG.png"
+                                        class="h-7 object-contain"
+                                        alt="Bkash"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
