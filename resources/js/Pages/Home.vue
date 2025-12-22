@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, usePage } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
     ShoppingCartIcon,
@@ -17,17 +17,77 @@ import {
 } from "@heroicons/vue/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
-import { useWishlistStore } from "@/Stores/wishlistStore";
+import { useWishlistStore } from "@/Stores/wishlistStore"; // ✅ Wishlist Store
 import { ref, onMounted, onUnmounted, computed } from "vue";
 
 const props = defineProps({
     products: Array,
 });
 
+const page = usePage();
 const cartStore = useCartStore();
-const wishlistStore = useWishlistStore();
+const wishlistStore = useWishlistStore(); // ✅ Wishlist Init
 
-// --- 🌟 Slider Logic Starts ---
+// --- 🛠️ Helper: Get Localized Name (JSON Fix) ---
+const getLocalizedName = (nameField) => {
+    try {
+        if (typeof nameField === "string" && nameField.startsWith("{")) {
+            const parsed = JSON.parse(nameField);
+            return parsed[page.props.locale] || parsed["en"] || "Unknown";
+        }
+        if (typeof nameField === "object" && nameField !== null) {
+            return nameField[page.props.locale] || nameField["en"] || "Unknown";
+        }
+        return nameField || "General";
+    } catch (e) {
+        return nameField || "General";
+    }
+};
+
+// --- 📂 Category Grouping Logic ---
+const getRootCategory = (category) => {
+    if (!category) return "Uncategorized";
+
+    let current = category;
+    while (current.parent) {
+        current = current.parent;
+    }
+    // মেইন ক্যাটাগরির নামও লোকালাইজ করা হচ্ছে
+    return getLocalizedName(current.name);
+};
+
+const productsByCategory = computed(() => {
+    const grouped = {};
+
+    props.products.forEach((product) => {
+        if (!product.category) return;
+
+        const rootCatName = getRootCategory(product.category);
+
+        if (!grouped[rootCatName]) {
+            grouped[rootCatName] = {
+                products: [],
+                subCategories: new Set(),
+            };
+        }
+
+        grouped[rootCatName].products.push(product);
+
+        // সাব-ক্যাটাগরি নামগুলো কালেক্ট করা
+        const currentCatName = getLocalizedName(product.category.name);
+        if (currentCatName !== rootCatName) {
+            grouped[rootCatName].subCategories.add(currentCatName);
+        }
+    });
+
+    return grouped;
+});
+
+const categoriesList = computed(() => {
+    return Object.keys(productsByCategory.value).sort();
+});
+
+// --- 🌟 Slider Logic ---
 const currentSlide = ref(0);
 const slides = [
     {
@@ -35,7 +95,7 @@ const slides = [
         tag: "New Arrival",
         title: "Next Gen",
         highlight: "Headphones",
-        desc: "Experience sound like never before. Noise cancellation meets premium comfort.",
+        desc: "Experience sound like never before.",
         bgClass: "from-slate-900 via-purple-900 to-slate-900",
         btnClass: "bg-purple-500 hover:bg-purple-600",
         image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
@@ -47,7 +107,7 @@ const slides = [
         tag: "Summer Collection",
         title: "Street",
         highlight: "Fashion",
-        desc: "Upgrade your wardrobe with the coolest trends of the season. 100% Cotton.",
+        desc: "Upgrade your wardrobe with the coolest trends.",
         bgClass: "from-orange-900 via-red-900 to-slate-900",
         btnClass: "bg-orange-500 hover:bg-orange-600",
         image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2070&auto=format&fit=crop",
@@ -59,7 +119,7 @@ const slides = [
         tag: "Exclusive Deal",
         title: "Smart",
         highlight: "Watches",
-        desc: "Stay connected and healthy with the new Series 9. Now with 20% Discount.",
+        desc: "Stay connected and healthy with the new Series 9.",
         bgClass: "from-emerald-900 via-teal-900 to-slate-900",
         btnClass: "bg-emerald-500 hover:bg-emerald-600",
         image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=2064&auto=format&fit=crop",
@@ -84,33 +144,13 @@ onMounted(() => {
 });
 onUnmounted(() => clearInterval(interval));
 
+// --- Actions ---
 const addToCart = (product) => {
     cartStore.addToCart(product);
 };
 const toggleWishlist = (product) => {
     wishlistStore.toggle(product.id);
 };
-
-// --- 📂 Category Logic ---
-const productsByCategory = computed(() => {
-    const grouped = {};
-    props.products.forEach((product) => {
-        const catName = product.category?.name || "General";
-        if (!grouped[catName]) {
-            grouped[catName] = [];
-        }
-        grouped[catName].push(product);
-    });
-    return grouped;
-});
-
-const categoriesList = computed(() => {
-    const cats = new Set();
-    props.products.forEach((p) => {
-        if (p.category?.name) cats.add(p.category.name);
-    });
-    return Array.from(cats);
-});
 
 // Scroll Helper
 const scrollContainer = (id, direction) => {
@@ -219,25 +259,6 @@ const scrollToTop = () => {
                                 class="w-full h-full object-cover rounded-[3rem] shadow-2xl border border-white/20 animate-scale-up"
                                 alt="Product"
                             />
-                            <div
-                                class="absolute bottom-8 -left-12 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl animate-bounce-slow flex items-center gap-3"
-                            >
-                                <div
-                                    class="bg-black p-3 rounded-full text-white"
-                                >
-                                    <ShieldCheckIcon class="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <p
-                                        class="text-xs text-gray-500 uppercase font-bold"
-                                    >
-                                        Featured
-                                    </p>
-                                    <p class="font-bold text-gray-900">
-                                        {{ slides[currentSlide].floatingText }}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -311,12 +332,12 @@ const scrollToTop = () => {
                 class="container mx-auto px-4 lg:px-8 relative z-10 space-y-20"
             >
                 <div
-                    v-for="(catProducts, categoryName) in productsByCategory"
+                    v-for="(group, categoryName) in productsByCategory"
                     :key="categoryName"
                     :id="'cat-section-' + categoryName"
                 >
                     <div
-                        class="flex justify-between items-end mb-8 border-b border-white/10 pb-4"
+                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-white/10 pb-4 gap-4"
                     >
                         <div>
                             <div class="flex items-center gap-2 mb-2">
@@ -327,12 +348,34 @@ const scrollToTop = () => {
                                 >
                             </div>
                             <h2
-                                class="text-3xl font-black text-white tracking-tight"
+                                class="text-3xl font-black text-white tracking-tight mb-3"
                             >
                                 {{ categoryName }}
                             </h2>
+                            <div
+                                class="flex flex-wrap gap-2"
+                                v-if="group.subCategories.size > 0"
+                            >
+                                <Link
+                                    v-for="subCat in Array.from(
+                                        group.subCategories
+                                    )"
+                                    :key="subCat"
+                                    :href="
+                                        route('products.index', {
+                                            category: subCat,
+                                        })
+                                    "
+                                    class="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-gray-400 hover:text-white hover:bg-white/10 transition"
+                                >
+                                    {{ subCat }}
+                                </Link>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <div
+                            class="flex items-center gap-4 self-end md:self-auto"
+                        >
                             <Link
                                 :href="
                                     route('products.index', {
@@ -376,7 +419,7 @@ const scrollToTop = () => {
                         class="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-4"
                     >
                         <div
-                            v-for="product in catProducts.slice(0, 8)"
+                            v-for="product in group.products.slice(0, 8)"
                             :key="product.id"
                             class="min-w-[260px] w-[260px] group relative bg-white/5 backdrop-blur-sm rounded-3xl p-4 border border-white/10 hover:border-indigo-500/50 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col h-full"
                         >
@@ -392,7 +435,7 @@ const scrollToTop = () => {
                                     <img
                                         v-if="product.thumb_image"
                                         :src="'/storage/' + product.thumb_image"
-                                        :alt="product.name"
+                                        :alt="getLocalizedName(product.name)"
                                         class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-out"
                                     />
                                     <div
@@ -444,7 +487,9 @@ const scrollToTop = () => {
                                 <p
                                     class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1"
                                 >
-                                    {{ product.category?.name || "General" }}
+                                    {{
+                                        getLocalizedName(product.category?.name)
+                                    }}
                                 </p>
 
                                 <Link
@@ -454,9 +499,9 @@ const scrollToTop = () => {
                                 >
                                     <h3
                                         class="font-bold text-sm md:text-base text-white leading-tight group-hover:text-indigo-400 transition-colors mb-2 line-clamp-2 min-h-[2.5rem]"
-                                        :title="product.name"
+                                        :title="getLocalizedName(product.name)"
                                     >
-                                        {{ product.name }}
+                                        {{ getLocalizedName(product.name) }}
                                     </h3>
                                 </Link>
 
@@ -491,7 +536,6 @@ const scrollToTop = () => {
                                             >৳{{ product.base_price }}</span
                                         >
                                     </div>
-
                                     <button
                                         @click.prevent="addToCart(product)"
                                         class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg shadow-white/10 hover:bg-indigo-500 hover:text-white hover:scale-110 hover:rotate-6 transition-all duration-300"
@@ -516,7 +560,6 @@ const scrollToTop = () => {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-
 /* Animations */
 .animate-fade-in-up {
     animation: fadeInUp 0.8s ease-out forwards;
@@ -530,7 +573,6 @@ const scrollToTop = () => {
 .animate-bounce-slow {
     animation: bounce 4s infinite;
 }
-
 @keyframes fadeInUp {
     from {
         opacity: 0;

@@ -2,65 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\App;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Product::query()
-        ->where('is_active', true)
-        ->with(['category']);
+    {
+        $query = Product::query()
+            ->with(['category', 'vendor'])
+            ->where('is_active', true);
 
-    if ($request->has('category') && $request->category != null) {
-        $categoryName = $request->category;
-        $query->whereHas('category', function ($q) use ($categoryName) {
-            $q->where('name', 'like', '%' . $categoryName . '%');
-        });
-    }
+        if ($request->has('category') && $request->category != null) {
 
-    // 2. Price Filter (Min & Max)
-    if ($request->filled('min_price')) {
-        $query->where('base_price', '>=', $request->min_price);
-    }
-    if ($request->filled('max_price')) {
-        $query->where('base_price', '<=', $request->max_price);
-    }
+            // Check for category using JSON query for translations
+            $category = Category::whereRaw("name->>'en' = ?", [$request->category])
+                        ->orWhereRaw("name->>'bn' = ?", [$request->category])
+                        ->first();
 
-    // 3. Sorting
-    if ($request->has('sort')) {
-        switch ($request->sort) {
-            case 'price_low':
-                $query->orderBy('base_price', 'asc');
-                break;
-            case 'price_high':
-                $query->orderBy('base_price', 'desc');
-                break;
-            case 'newest':
-                $query->latest();
-                break;
-            case 'oldest':
-                $query->oldest();
-                break;
-            default:
-                $query->latest();
-                break;
+            if ($category) {
+                $allCategoryIds = $this->getAllCategoryIds($category);
+                $query->whereIn('category_id', $allCategoryIds);
+            }
         }
-    } else {
-        $query->latest();
+
+        if ($request->filled('min_price')) {
+            $query->where('base_price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('base_price', '<=', $request->max_price);
+        }
+
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'price_low':
+                    $query->orderBy('base_price', 'asc');
+                    break;
+                case 'price_high':
+                    $query->orderBy('base_price', 'desc');
+                    break;
+                case 'newest':
+                    $query->latest();
+                    break;
+                case 'oldest':
+                    $query->oldest();
+                    break;
+                default:
+                    $query->latest();
+                    break;
+            }
+        } else {
+            $query->latest();
+        }
+
+        $products = $query->paginate(12)->withQueryString();
+
+        return Inertia::render('Products/Index', [
+            'products' => $products,
+            'categoryName' => $request->category ?? 'All Products',
+            'filters' => $request->only(['search', 'min_price', 'max_price', 'sort', 'category']),
+        ]);
     }
-
-    $products = $query->paginate(12)->withQueryString();
-
-    return Inertia::render('Products/Index', [
-        'products' => $products,
-        'categoryName' => $request->category ?? 'All Products',
-        'filters' => $request->only(['search', 'min_price', 'max_price', 'sort', 'category']),
-    ]);
-}
 
     public function show($slug)
     {
@@ -87,5 +91,19 @@ class ProductController extends Controller
         return Inertia::render('ProductDetails', [
             'product' => $productData
         ]);
+    }
+
+    private function getAllCategoryIds($category)
+    {
+        $ids = collect([$category->id]);
+
+        $category->children->each(function ($child) use ($ids) {
+            $ids->push($child->id);
+            $child->children->each(function ($grandChild) use ($ids) {
+                $ids->push($grandChild->id);
+            });
+        });
+
+        return $ids->unique()->toArray();
     }
 }
