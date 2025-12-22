@@ -8,9 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     use HasFactory;
-    protected $guarded = [];
-    protected $casts = [
-        'address_details' => 'array',
+    protected $fillable = [
+        'user_id',
+        'invoice_no',
+        'total_amount',
+    /**
+     * Get the order items.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+        'payment_method',
+        'payment_status',
+        'status',
+        'transaction_id',
+        'name',
+        'phone',
+        'address',
+        'city',
     ];
 
     public function items()

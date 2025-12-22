@@ -24,12 +24,23 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                // প্যারেন্ট ক্যাটাগরি (Optional)
+                // ✅ প্যারেন্ট ক্যাটাগরি ফিক্স (JSON সার্চ সমস্যা সমাধান)
                 Select::make('parent_id')
                     ->label('Parent Category')
-                    ->relationship('parent', 'name')
+                    ->placeholder('Select if this is a sub-category')
                     ->searchable()
-                    ->placeholder('Select if this is a sub-category'),
+                    ->getSearchResultsUsing(function (string $search) {
+                        return Category::query()
+                            // PostgreSQL এর জন্য JSON এর 'en' কি-তে সার্চ
+                            ->whereRaw("name->>'en' ILIKE ?", ["%{$search}%"])
+                            ->limit(50)
+                            ->get()
+                            // মডেল এক্সেসর ব্যবহার করে নাম ফরম্যাট করা
+                            ->mapWithKeys(fn ($category) => [$category->id => $category->name]);
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        return Category::find($value)?->name;
+                    }),
 
                 TextInput::make('name')
                     ->required()
@@ -54,10 +65,17 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image'),
-                Tables\Columns\TextColumn::make('name')->searchable(),
+
+                // ✅ টেবিল সার্চ ফিক্স (যাতে এখানেও এরর না দেয়)
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereRaw("name->>'en' ILIKE ?", ["%{$search}%"]);
+                    }),
+
                 Tables\Columns\TextColumn::make('parent.name')
                     ->label('Parent Category')
-                    ->placeholder('Main Category'), // প্যারেন্ট না থাকলে এটা দেখাবে
+                    ->placeholder('Main Category'),
+
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
             ])
             ->actions([

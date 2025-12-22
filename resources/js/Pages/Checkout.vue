@@ -13,8 +13,6 @@ import {
     CreditCardIcon,
 } from "@heroicons/vue/24/outline";
 import { watch, ref } from "vue";
-
-// 🇧🇩 Import Bangladesh Data
 import { locations } from "@/Data/bangladesh";
 
 const cartStore = useCartStore();
@@ -24,17 +22,26 @@ const form = useForm({
     name: page.props.auth.user?.name || "",
     phone: "",
     address: "",
-    city: "", // District
-    thana: "", // Upazila
+    city: "",
+    thana: "",
     payment_method: "cod",
-    items: cartStore.items,
-    total_price: cartStore.totalPrice + 120,
+    items: [], // শুরুতে ফাঁকা রাখা ভালো, সাবমিটের সময় ভরা হবে
+    total_price: 0,
 });
 
 const submitOrder = () => {
+    // ✅ ১. সাবমিট করার ঠিক আগে লেটেস্ট কার্ট ডাটা ফর্ম-এ সেট করুন
+    form.items = cartStore.items;
+    form.total_price = cartStore.totalPrice + 120; // Delivery Charge
+
     form.post(route("checkout.store"), {
         onSuccess: () => {
-            cartStore.clearCart();
+            // ✅ ২. শুধুমাত্র COD হলে কার্ট ক্লিয়ার করবেন।
+            // SSLCommerz হলে পেজ রিডাইরেক্ট হয়ে চলে যাবে, তাই এখানে ক্লিয়ার করার দরকার নেই
+            // (ফেইল হলে ইউজার আবার কার্ট দেখতে পাবে)
+            if (form.payment_method === "cod") {
+                cartStore.clearCart();
+            }
         },
         onError: (errors) => {
             console.log(errors);
@@ -62,13 +69,12 @@ const getLocalizedName = (name) => {
 const districts = Object.keys(locations).sort();
 const availableThanas = ref([]);
 
-// Watch City Change -> Update Thana List
 watch(
     () => form.city,
     (newCity) => {
         if (newCity && locations[newCity]) {
             availableThanas.value = locations[newCity].sort();
-            form.thana = ""; // Reset thana selection
+            form.thana = "";
         } else {
             availableThanas.value = [];
             form.thana = "";
@@ -202,6 +208,7 @@ watch(
                                         <select
                                             v-model="form.city"
                                             class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none appearance-none cursor-pointer custom-select"
+                                            required
                                         >
                                             <option
                                                 value=""
@@ -226,6 +233,12 @@ watch(
                                             <ChevronDownIcon class="w-4 h-4" />
                                         </div>
                                     </div>
+                                    <p
+                                        v-if="form.errors.city"
+                                        class="text-rose-500 text-xs mt-1"
+                                    >
+                                        {{ form.errors.city }}
+                                    </p>
                                 </div>
 
                                 <div class="col-span-2 md:col-span-1">
@@ -238,6 +251,7 @@ watch(
                                             v-model="form.thana"
                                             class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none appearance-none cursor-pointer custom-select disabled:opacity-50 disabled:cursor-not-allowed"
                                             :disabled="!form.city"
+                                            required
                                         >
                                             <option
                                                 value=""
@@ -268,6 +282,12 @@ watch(
                                             <ChevronDownIcon class="w-4 h-4" />
                                         </div>
                                     </div>
+                                    <p
+                                        v-if="form.errors.thana"
+                                        class="text-rose-500 text-xs mt-1"
+                                    >
+                                        {{ form.errors.thana }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -284,6 +304,7 @@ watch(
                                 >
                                 {{ __("Payment Method") }}
                             </h2>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label class="cursor-pointer relative group">
                                     <input
@@ -313,6 +334,7 @@ watch(
                                         />
                                     </div>
                                 </label>
+
                                 <label class="cursor-pointer relative group">
                                     <input
                                         type="radio"
@@ -367,7 +389,11 @@ watch(
                                         class="w-16 h-16 bg-white rounded-xl border border-white/10 flex-shrink-0 p-1"
                                     >
                                         <img
-                                            :src="'/storage/' + item.image"
+                                            :src="
+                                                item.image
+                                                    ? `/storage/${item.image}`
+                                                    : 'https://placehold.co/400x400'
+                                            "
                                             class="w-full h-full object-contain mix-blend-multiply"
                                             :alt="getLocalizedName(item.name)"
                                         />
@@ -434,6 +460,16 @@ watch(
                                 }}</span>
                                 <span v-else>{{ __("Place Order") }}</span>
                             </button>
+
+                            <p
+                                class="mt-4 text-center text-[10px] text-gray-500"
+                            >
+                                {{
+                                    __(
+                                        "By placing this order, you agree to our Terms of Service and Privacy Policy."
+                                    )
+                                }}
+                            </p>
                         </div>
                     </div>
                 </form>

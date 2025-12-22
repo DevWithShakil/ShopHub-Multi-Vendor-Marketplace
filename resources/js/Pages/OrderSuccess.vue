@@ -10,13 +10,20 @@ import {
     HomeIcon,
 } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentCheckIcon } from "@heroicons/vue/24/outline";
-import { ref } from "vue";
+import { ref, onMounted } from "vue"; // ✅ onMounted ইমপোর্ট করা হলো
+import { useCartStore } from "@/Stores/cartStore"; // ✅ কার্ট স্টোর ইমপোর্ট
 
 const props = defineProps({
     invoice_no: String,
 });
 
+const cartStore = useCartStore(); // ✅ স্টোর ইনিশিলাইজ
 const copied = ref(false);
+
+// ✅ পেজ লোড হওয়ার সাথে সাথে কার্ট ক্লিয়ার হয়ে যাবে
+onMounted(() => {
+    cartStore.clearCart();
+});
 
 const copyOrderNo = () => {
     navigator.clipboard.writeText(props.invoice_no);
@@ -61,7 +68,7 @@ const copyOrderNo = () => {
                 <div class="p-8 md:p-12 text-center">
                     <div class="mb-8 relative inline-block">
                         <div
-                            class="w-28 h-28 bg-green-500/20 rounded-full flex items-center justify-center mx-auto animate-scale-up ring-4 ring-green-500/10"
+                            class="w-28 h-28 bg-green-500/20 rounded-full flex items-center justify-center mx-auto animate-scale-up ring-4 ring-green-500/10 shadow-lg shadow-green-900/20"
                         >
                             <CheckBadgeIcon
                                 class="w-20 h-20 text-green-400 drop-shadow-lg"
@@ -102,8 +109,8 @@ const copyOrderNo = () => {
                             </span>
                             <button
                                 @click="copyOrderNo"
-                                class="text-gray-500 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
-                                title="Copy"
+                                class="text-gray-500 hover:text-white transition p-2 rounded-lg hover:bg-white/10 active:scale-95"
+                                title="Copy Order ID"
                             >
                                 <ClipboardDocumentCheckIcon
                                     v-if="!copied"
@@ -187,15 +194,18 @@ const copyOrderNo = () => {
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
                             href="/dashboard/orders"
-                            class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-transform active:scale-95"
+                            class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-transform active:scale-95 group"
                         >
-                            Track Order <ArrowRightIcon class="w-5 h-5" />
+                            Track Order
+                            <ArrowRightIcon
+                                class="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                            />
                         </Link>
                         <Link
                             href="/"
-                            class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-xl font-bold transition-all active:scale-95"
+                            class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-xl font-bold transition-all active:scale-95"
                         >
-                            Continue Shopping
+                            <HomeIcon class="w-5 h-5" /> Continue Shopping
                         </Link>
                     </div>
                 </div>

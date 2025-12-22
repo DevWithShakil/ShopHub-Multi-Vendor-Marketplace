@@ -75,8 +75,16 @@
     })->name('language.switch');
 
 
-    Route::post('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
-    Route::post('/payment/fail', [PaymentController::class, 'fail'])->name('payment.fail');
-    Route::post('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+// SSLCommerz Callback
+Route::post('/pay/success', [PaymentController::class, 'success'])->name('payment.success');
+Route::post('/pay/fail', [PaymentController::class, 'fail'])->name('payment.fail');
+Route::post('/pay/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+
+// Order Success Page
+Route::get('/order/success/{invoice_no}', function ($invoice_no) {
+    return Inertia::render('Order/Success', ['invoice_no' => $invoice_no]);
+})->name('order.success');
 
     require __DIR__.'/auth.php';

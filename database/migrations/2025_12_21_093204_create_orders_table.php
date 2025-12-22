@@ -15,11 +15,17 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('invoice_no')->unique();
+            $table->string('name');
+            $table->string('phone');
+            $table->text('address');
+            $table->string('city');
+            $table->string('thana')->nullable();
+
             $table->decimal('total_amount', 10, 2);
             $table->string('payment_method');
-            $table->string('payment_status')->default('pending');
+            $table->string('payment_status')->default('Unpaid');
             $table->string('status')->default('pending');
-            $table->json('address_details');
+            $table->string('transaction_id')->nullable();
             $table->timestamps();
         });
     }

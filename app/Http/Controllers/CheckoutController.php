@@ -7,8 +7,10 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log; // ✅ লগিং এর জন্য এটি জরুরি
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -20,102 +22,112 @@ class CheckoutController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'phone' => 'required|string',
-            'address' => 'required|string',
-            'items' => 'required|array|min:1',
-        ]);
+{
+    // ১. ভ্যালিডেশন
+    $validated = $request->validate([
+        'name' => 'required|string',
+        'phone' => 'required|string',
+        'address' => 'required|string',
+        'city' => 'required|string',
+        'payment_method' => 'required|in:cod,sslcommerz',
+        'items' => 'required|array|min:1',
+        'total_price' => 'required|numeric',
+    ]);
 
-        try {
-            DB::beginTransaction();
+    try {
+        return DB::transaction(function () use ($validated, $request) {
 
+            // ২. অর্ডার তৈরি
             $order = Order::create([
-                'user_id' => auth()->id() ?? null,
+                'user_id' => Auth::id(),
                 'invoice_no' => 'INV-' . strtoupper(Str::random(8)),
-                'total_amount' => $request->total_price + 120,
-                'payment_method' => $request->payment_method,
-                'payment_status' => 'pending',
+                'name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+                'city' => $validated['city'],
+                'total_amount' => $validated['total_price'],
+                'payment_method' => $validated['payment_method'],
+                'payment_status' => 'Unpaid',
                 'status' => 'pending',
-                'address_details' =>[
-                    'name' => $request->name,
-                    'phone' => $request->phone,
-                    'address' => $request->address,
-                    'city' => $request->city
-                ],
             ]);
 
+            // ৩. অর্ডার আইটেম লুপ
             foreach ($request->items as $item) {
+                // ✅ প্রোডাক্ট খুঁজে বের করা (Vendor ID পাওয়ার জন্য)
+                $product = Product::findOrFail($item['id']);
 
+                // স্টক কমানো
                 if (isset($item['variant'])) {
                     $variant = ProductVariant::find($item['variant']['id']);
-                    if ($variant && $variant->stock_qty >= $item['quantity']) {
+                    if ($variant) {
                         $variant->decrement('stock_qty', $item['quantity']);
                     }
                 } else {
-                    $product = Product::find($item['id']);
-                    // $product->decrement('stock', $item['quantity']);
+                    // $product->decrement('stock', $item['quantity']); // যদি মেইন প্রোডাক্টে স্টক থাকে
                 }
 
+                // আইটেম তৈরি
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item['id'],
-                    'vendor_id' => Product::find($item['id'])->vendor_id,
+                    'vendor_id' => $product->vendor_id, // ✅ এই লাইনটি এখন যোগ করা হয়েছে
                     'variant_id' => $item['variant']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
             }
 
-            DB::commit();
+            // ==========================================
+            // 🚀 পেমেন্ট লজিক (SSLCommerz)
+            // ==========================================
+            if ($validated['payment_method'] === 'sslcommerz') {
 
-        if ($request->payment_method === 'bkash' || $request->payment_method === 'online') {
+                $post_data = [
+                    'store_id' => env('SSLC_STORE_ID'),
+                    'store_passwd' => env('SSLC_STORE_PASSWORD'),
+                    'total_amount' => $order->total_amount,
+                    'currency' => 'BDT',
+                    'tran_id' => $order->invoice_no,
+                    'success_url' => route('payment.success'),
+                    'fail_url' => route('payment.fail'),
+                    'cancel_url' => route('payment.cancel'),
+                    'cus_name' => $order->name,
+                    'cus_email' => Auth::user()->email ?? 'guest@shophub.com',
+                    'cus_add1' => $order->address,
+                    'cus_city' => $order->city,
+                    'cus_country' => 'Bangladesh',
+                    'cus_phone' => $order->phone,
+                    'shipping_method' => 'NO',
+                    'product_name' => 'Computer Accessories',
+                    'product_category' => 'Electronics',
+                    'product_profile' => 'general',
+                ];
 
-            $post_data = [
-                'store_id' => env('SSLC_STORE_ID'),
-                'store_passwd' => env('SSLC_STORE_PASSWORD'),
-                'total_amount' => $order->total_amount,
-                'currency' => 'BDT',
-                'tran_id' => $order->invoice_no,
-                'success_url' => route('payment.success'),
-                'fail_url' => route('payment.fail'),
-                'cancel_url' => route('payment.cancel'),
-                'cus_name' => $order->address_details['name'],
-                'cus_email' => auth()->user()->email ?? 'guest@customer.com',
-                'cus_add1' => $order->address_details['address'],
-                'cus_city' => $order->address_details['city'],
-                'cus_country' => 'Bangladesh',
-                'cus_phone' => $order->address_details['phone'],
-                'shipping_method' => 'NO',
-                'product_name' => 'E-commerce Items',
-                'product_category' => 'General',
-                'product_profile' => 'general',
-            ];
+                $api_url = env('SSLC_MODE') === 'sandbox'
+                    ? 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php'
+                    : 'https://securepay.sslcommerz.com/gwprocess/v4/api.php';
 
-            // API call (Sandbox URL)
-           $response = Http::withoutVerifying()
-                ->asForm()
-                ->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $post_data);
+                $response = Http::withoutVerifying()->asForm()->post($api_url, $post_data);
+                $ssl = json_decode($response->body());
 
-            $ssl = json_decode($response->body());
-
-            if (isset($ssl->status) && $ssl->status == 'SUCCESS') {
-
-                return Inertia::location($ssl->GatewayPageURL);
-            } else {
-                return back()->withErrors(['error' => 'Payment Gateway Error']);
+                if (isset($ssl->status) && $ssl->status == 'SUCCESS') {
+                    return Inertia::location($ssl->GatewayPageURL);
+                } else {
+                    throw new \Exception('Payment Gateway Error: ' . ($ssl->failedreason ?? 'Unknown error'));
+                }
             }
-        }
 
-        return redirect()->route('order.success', $order->invoice_no);
+            return to_route('order.success', ['invoice_no' => $order->invoice_no]);
+        });
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withErrors(['error' => 'Something went wrong! ' . $e->getMessage()]);
-        }
+    } catch (\Exception $e) {
+        return back()->withErrors(['error' => 'Order Failed! ' . $e->getMessage()]);
     }
+}
 
+/**
+     * ✅ Order Success Page Method
+     */
     public function success($invoice_no)
     {
         return Inertia::render('OrderSuccess', [
