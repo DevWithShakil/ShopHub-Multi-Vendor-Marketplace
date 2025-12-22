@@ -506,17 +506,38 @@ const scrollToTop = () => {
                                 </Link>
 
                                 <div class="flex items-center gap-1 mb-4">
-                                    <div class="flex text-yellow-400">
+                                    <div class="flex items-center">
                                         <StarIcon
                                             v-for="i in 5"
                                             :key="i"
-                                            class="w-3.5 h-3.5 fill-current"
+                                            class="w-3.5 h-3.5"
+                                            :class="
+                                                i <=
+                                                Math.round(
+                                                    product.reviews_avg_rating ||
+                                                        0
+                                                )
+                                                    ? 'text-yellow-400 fill-current'
+                                                    : 'text-gray-600'
+                                            "
                                         />
                                     </div>
                                     <span
-                                        class="text-xs font-bold text-gray-400"
-                                        >(4.5)</span
+                                        class="text-xs font-bold text-gray-400 ml-1"
                                     >
+                                        ({{
+                                            product.reviews_avg_rating
+                                                ? parseFloat(
+                                                      product.reviews_avg_rating
+                                                  ).toFixed(1)
+                                                : "0.0"
+                                        }})
+                                        <span class="mx-1 text-gray-600"
+                                            >|</span
+                                        >
+                                        {{ product.reviews_count || 0 }}
+                                        {{ __("Reviews") }}
+                                    </span>
                                 </div>
 
                                 <div
