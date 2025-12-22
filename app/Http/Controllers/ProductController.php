@@ -13,6 +13,8 @@ class ProductController extends Controller
     {
         $query = Product::query()
             ->with(['category', 'vendor'])
+            ->withAvg('reviews as reviews_avg_rating', 'rating')
+            ->withCount('reviews')
             ->where('is_active', true);
 
         if ($request->has('category') && $request->category != null) {
@@ -67,31 +69,44 @@ class ProductController extends Controller
     }
 
     public function show($slug)
-    {
-        $product = Product::with(['category', 'vendor', 'variants'])
-            ->where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+{
+    $product = Product::with([
+            'category',
+            'vendor',
+            'variants',
+            'reviews' => function($query) {
+                $query->with('user:id,name')->latest();
+            }
+        ])
+        ->withAvg('reviews as reviews_avg_rating', 'rating')
+        ->withCount('reviews')
+        ->where('slug', $slug)
+        ->where('is_active', true)
+        ->firstOrFail();
 
-        $productData = [
-            'id' => $product->id,
-            'name' => $product->name,
-            'slug' => $product->slug,
-            'description' => $product->description,
-            'base_price' => $product->base_price,
-            'discount_price' => $product->discount_price,
-            'thumb_image' => $product->thumb_image,
-            'gallery_images' => $product->gallery_images,
-            'has_variants' => $product->has_variants,
-            'category' => $product->category ? ['name' => $product->category->name] : null,
-            'vendor' => $product->vendor ? ['shop_name' => $product->vendor->shop_name] : null,
-            'variants' => $product->variants
-        ];
+    $productData = [
+        'id' => $product->id,
+        'name' => $product->name,
+        'slug' => $product->slug,
+        'description' => $product->description,
+        'base_price' => $product->base_price,
+        'discount_price' => $product->discount_price,
+        'thumb_image' => $product->thumb_image,
+        'gallery_images' => $product->gallery_images,
+        'has_variants' => $product->has_variants,
+        'category' => $product->category ? ['name' => $product->category->name] : null,
+        'vendor' => $product->vendor ? ['shop_name' => $product->vendor->shop_name] : null,
+        'variants' => $product->variants,
 
-        return Inertia::render('ProductDetails', [
-            'product' => $productData
-        ]);
-    }
+        'reviews' => $product->reviews,
+        'reviews_avg_rating' => $product->reviews_avg_rating,
+        'reviews_count' => $product->reviews_count,
+    ];
+
+    return Inertia::render('ProductDetails', [
+        'product' => $productData
+    ]);
+}
 
     private function getAllCategoryIds($category)
     {

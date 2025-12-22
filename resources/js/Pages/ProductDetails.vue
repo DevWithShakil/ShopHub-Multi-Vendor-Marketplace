@@ -163,18 +163,36 @@ const toggleWishlist = () => {
                         </h1>
 
                         <div class="flex items-center gap-6 mb-8 text-sm">
-                            <div
-                                class="flex items-center gap-1 bg-yellow-500/10 px-3 py-1 rounded-lg border border-yellow-500/20"
-                            >
-                                <StarIcon
-                                    class="w-4 h-4 text-yellow-400 fill-yellow-400"
-                                />
-                                <span class="font-bold text-yellow-400"
-                                    >4.8</span
+                            <div class="flex items-center gap-1 mb-4">
+                                <div class="flex text-yellow-400">
+                                    <StarIcon
+                                        v-for="i in 5"
+                                        :key="i"
+                                        class="w-3.5 h-3.5"
+                                        :class="
+                                            i <=
+                                            Math.round(
+                                                product.reviews_avg_rating || 0
+                                            )
+                                                ? 'fill-current'
+                                                : 'text-gray-600 fill-none'
+                                        "
+                                    />
+                                </div>
+                                <span
+                                    class="text-xs font-bold text-gray-400 ml-1"
                                 >
-                                <span class="text-gray-400 ml-1"
-                                    >(120 Reviews)</span
-                                >
+                                    ({{
+                                        product.reviews_avg_rating
+                                            ? parseFloat(
+                                                  product.reviews_avg_rating
+                                              ).toFixed(1)
+                                            : "0.0"
+                                    }})
+                                </span>
+                                <span class="text-[10px] text-gray-500 ml-1">
+                                    | {{ product.reviews_count || 0 }} Reviews
+                                </span>
                             </div>
                             <div
                                 class="flex items-center gap-1 text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20"

@@ -348,12 +348,31 @@ const getLocalizedName = (name) => {
                                     <StarIcon
                                         v-for="i in 5"
                                         :key="i"
-                                        class="w-3.5 h-3.5 fill-current"
+                                        class="w-3.5 h-3.5"
+                                        :class="
+                                            i <=
+                                            Math.round(
+                                                product.reviews_avg_rating || 0
+                                            )
+                                                ? 'fill-current'
+                                                : 'text-gray-600 fill-none'
+                                        "
                                     />
                                 </div>
-                                <span class="text-xs font-bold text-gray-400"
-                                    >(4.5)</span
+                                <span
+                                    class="text-xs font-bold text-gray-400 ml-1"
                                 >
+                                    ({{
+                                        product.reviews_avg_rating
+                                            ? parseFloat(
+                                                  product.reviews_avg_rating
+                                              ).toFixed(1)
+                                            : "0.0"
+                                    }})
+                                </span>
+                                <span class="text-[10px] text-gray-500 ml-1">
+                                    | {{ product.reviews_count || 0 }} Reviews
+                                </span>
                             </div>
                             <div
                                 class="mt-auto flex items-center justify-between border-t border-white/10 pt-4"
