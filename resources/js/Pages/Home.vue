@@ -27,7 +27,7 @@ const props = defineProps({
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
 
-// --- 🌟 Slider Logic (Same as before) ---
+// --- 🌟 Slider Logic Starts ---
 const currentSlide = ref(0);
 const slides = [
     {
@@ -112,7 +112,7 @@ const categoriesList = computed(() => {
     return Array.from(cats);
 });
 
-// 🛠️ Horizontal Scroll inside section
+// Scroll Helper
 const scrollContainer = (id, direction) => {
     const container = document.getElementById(id);
     if (container) {
@@ -123,24 +123,16 @@ const scrollContainer = (id, direction) => {
     }
 };
 
-// 🚀 Scroll To Category Section (New Feature)
 const scrollToSection = (categoryName) => {
     const elementId = "cat-section-" + categoryName;
     const element = document.getElementById(elementId);
-
     if (element) {
-        // Navbar (80px) + Category Bar (80px) = Total Offset ~160px
-        // একটু বেশি গ্যাপ (200px) রাখছি যাতে দেখতে সুন্দর লাগে
         const offset = 220;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = element.getBoundingClientRect().top;
         const elementPosition = elementRect - bodyRect;
         const offsetPosition = elementPosition - offset;
-
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth",
-        });
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
 };
 
@@ -295,7 +287,6 @@ const scrollToTop = () => {
                         <FireIcon class="w-4 h-4 text-orange-500" /> All
                         Categories
                     </button>
-
                     <button
                         v-for="cat in categoriesList"
                         :key="cat"
@@ -343,13 +334,16 @@ const scrollToTop = () => {
                         </div>
                         <div class="flex items-center gap-4">
                             <Link
-                                href="#"
+                                :href="
+                                    route('products.index', {
+                                        category: categoryName,
+                                    })
+                                "
                                 class="text-sm font-bold text-white hover:text-indigo-400 transition flex items-center gap-1"
                             >
                                 {{ __("See All") }}
                                 <ArrowRightIcon class="w-4 h-4" />
                             </Link>
-
                             <div class="hidden md:flex gap-2">
                                 <button
                                     @click="

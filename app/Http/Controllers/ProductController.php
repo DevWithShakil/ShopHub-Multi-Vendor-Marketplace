@@ -5,9 +5,46 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\App;
 
 class ProductController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = Product::query()
+            ->where('is_active', true)
+            ->with(['category']);
+
+        if ($request->has('category') && $request->category != null) {
+            $categoryName = $request->category;
+            $locale = App::getLocale();
+
+            $query->whereHas('category', function ($q) use ($categoryName, $locale) {
+                $q->whereRaw("name->>'$locale' = ?", [$categoryName])
+                  ->orWhereRaw("name->>'en' = ?", [$categoryName]);
+            });
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $locale = App::getLocale();
+
+            $query->where(function($q) use ($search, $locale) {
+                $q->whereRaw("name->>'$locale' ILIKE ?", ['%' . $search . '%'])
+                  ->orWhereRaw("name->>'en' ILIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $query->latest();
+
+        $products = $query->paginate(12)->withQueryString();
+
+        return Inertia::render('Products/Index', [
+            'products' => $products,
+            'categoryName' => $request->category ?? 'All Products',
+        ]);
+    }
+
     public function show($slug)
     {
         $product = Product::with(['category', 'vendor', 'variants'])
