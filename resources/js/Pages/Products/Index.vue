@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Head, Link, usePage, router } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
     ShoppingCartIcon,
@@ -7,23 +7,71 @@ import {
     HeartIcon,
     EyeIcon,
     FunnelIcon,
-    Squares2X2Icon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
+    ArrowsUpDownIcon,
+    ChevronDownIcon,
     HomeIcon,
+    XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
+import { ref, reactive, watch } from "vue";
+import { debounce } from "lodash";
 
 const props = defineProps({
-    products: Object, // Paginated Object
+    products: Object,
     categoryName: String,
+    filters: Object,
 });
 
 const page = usePage();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
+
+// --- 🎛️ Filter & Sort State ---
+const showFilter = ref(false);
+const showSort = ref(false);
+
+const params = reactive({
+    category: props.filters.category || null,
+    sort: props.filters.sort || "newest",
+    min_price: props.filters.min_price || "",
+    max_price: props.filters.max_price || "",
+});
+
+// --- 🔄 Update Logic with Debounce ---
+const updateParams = debounce(() => {
+    router.get(route("products.index"), params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
+}, 500); // 500ms delay for smoother typing
+
+// Special watcher for sort to trigger immediately without debounce
+const changeSort = (value) => {
+    params.sort = value;
+    showSort.value = false;
+    // Direct call for immediate sort
+    router.get(route("products.index"), params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
+};
+
+const applyPriceFilter = () => {
+    showFilter.value = false;
+    updateParams(); // Trigger fetch
+};
+
+const resetFilters = () => {
+    params.min_price = "";
+    params.max_price = "";
+    params.sort = "newest";
+    // Keep category if it exists
+    updateParams();
+};
 
 const addToCart = (product) => {
     cartStore.addToCart(product);
@@ -32,7 +80,7 @@ const toggleWishlist = (product) => {
     wishlistStore.toggle(product.id);
 };
 
-// ✅ নামের JSON ফরম্যাট ঠিক করার ফাংশন
+// ✅ JSON Name Fix Helper
 const getLocalizedName = (name) => {
     if (!name) return "";
     try {
@@ -57,6 +105,10 @@ const getLocalizedName = (name) => {
     <MainLayout>
         <div
             class="min-h-screen bg-[#0B0F19] py-12 relative overflow-hidden font-sans"
+            @click="
+                showSort = false;
+                showFilter = false;
+            "
         >
             <div
                 class="absolute top-0 left-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none"
@@ -86,22 +138,128 @@ const getLocalizedName = (name) => {
                             {{ getLocalizedName(categoryName) }}
                         </h1>
                         <p class="text-gray-400 text-sm">
-                            Showing {{ products.from }}-{{ products.to }} of
-                            {{ products.total }} results
+                            Found {{ products.total }} items
                         </p>
                     </div>
 
-                    <div class="flex gap-3">
-                        <button
-                            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition text-sm font-bold"
-                        >
-                            <FunnelIcon class="w-4 h-4" /> {{ __("Filter") }}
-                        </button>
-                        <button
-                            class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition text-sm font-bold"
-                        >
-                            <Squares2X2Icon class="w-4 h-4" /> {{ __("Sort") }}
-                        </button>
+                    <div class="flex gap-3 relative" @click.stop>
+                        <div class="relative">
+                            <button
+                                @click="
+                                    showFilter = !showFilter;
+                                    showSort = false;
+                                "
+                                class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition text-sm font-bold"
+                                :class="{
+                                    'bg-indigo-600 border-indigo-600':
+                                        params.min_price || params.max_price,
+                                }"
+                            >
+                                <FunnelIcon class="w-4 h-4" />
+                                {{ __("Filter") }}
+                            </button>
+
+                            <div
+                                v-if="showFilter"
+                                class="absolute right-0 mt-3 w-72 bg-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl p-5 z-50 animate-fade-in-up origin-top-right"
+                            >
+                                <div
+                                    class="flex justify-between items-center mb-4"
+                                >
+                                    <h3 class="text-white font-bold">
+                                        {{ __("Price Range") }}
+                                    </h3>
+                                    <button
+                                        @click="resetFilters"
+                                        class="text-xs text-rose-400 hover:text-rose-300"
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
+                                <div class="flex gap-3 mb-4">
+                                    <input
+                                        v-model="params.min_price"
+                                        type="number"
+                                        placeholder="Min"
+                                        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
+                                    />
+                                    <input
+                                        v-model="params.max_price"
+                                        type="number"
+                                        placeholder="Max"
+                                        class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
+                                    />
+                                </div>
+                                <button
+                                    @click="applyPriceFilter"
+                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-bold transition"
+                                >
+                                    {{ __("Apply Filter") }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <button
+                                @click="
+                                    showSort = !showSort;
+                                    showFilter = false;
+                                "
+                                class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition text-sm font-bold"
+                            >
+                                <ArrowsUpDownIcon class="w-4 h-4" />
+                                <span class="hidden sm:inline">{{
+                                    __("Sort")
+                                }}</span>
+                                <ChevronDownIcon class="w-3 h-3" />
+                            </button>
+
+                            <div
+                                v-if="showSort"
+                                class="absolute right-0 mt-3 w-48 bg-[#1a1f2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in-up origin-top-right"
+                            >
+                                <button
+                                    @click="changeSort('newest')"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition"
+                                    :class="{
+                                        'text-indigo-400 font-bold':
+                                            params.sort === 'newest',
+                                    }"
+                                >
+                                    Newest Arrivals
+                                </button>
+                                <button
+                                    @click="changeSort('price_low')"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition"
+                                    :class="{
+                                        'text-indigo-400 font-bold':
+                                            params.sort === 'price_low',
+                                    }"
+                                >
+                                    Price: Low to High
+                                </button>
+                                <button
+                                    @click="changeSort('price_high')"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition"
+                                    :class="{
+                                        'text-indigo-400 font-bold':
+                                            params.sort === 'price_high',
+                                    }"
+                                >
+                                    Price: High to Low
+                                </button>
+                                <button
+                                    @click="changeSort('oldest')"
+                                    class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition"
+                                    :class="{
+                                        'text-indigo-400 font-bold':
+                                            params.sort === 'oldest',
+                                    }"
+                                >
+                                    Oldest First
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -134,13 +292,11 @@ const getLocalizedName = (name) => {
                                     No Image
                                 </div>
                             </Link>
-
                             <span
                                 v-if="product.discount_price"
                                 class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
+                                >Sale</span
                             >
-                                Sale
-                            </span>
 
                             <div
                                 class="absolute top-3 right-3 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300"
@@ -156,17 +312,15 @@ const getLocalizedName = (name) => {
                                             )
                                         "
                                         class="w-5 h-5 text-red-500 animate-pulse"
-                                    />
-                                    <HeartIcon v-else class="w-5 h-5" />
+                                    /><HeartIcon v-else class="w-5 h-5" />
                                 </button>
                                 <Link
                                     :href="
                                         route('product.details', product.slug)
                                     "
                                     class="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-500 hover:text-indigo-600 transition-colors"
-                                >
-                                    <EyeIcon class="w-5 h-5" />
-                                </Link>
+                                    ><EyeIcon class="w-5 h-5"
+                                /></Link>
                             </div>
                         </div>
 
@@ -179,7 +333,6 @@ const getLocalizedName = (name) => {
                                     "General"
                                 }}
                             </p>
-
                             <Link
                                 :href="route('product.details', product.slug)"
                             >
@@ -190,7 +343,6 @@ const getLocalizedName = (name) => {
                                     {{ getLocalizedName(product.name) }}
                                 </h3>
                             </Link>
-
                             <div class="flex items-center gap-1 mb-4">
                                 <div class="flex text-yellow-400">
                                     <StarIcon
@@ -203,7 +355,6 @@ const getLocalizedName = (name) => {
                                     >(4.5)</span
                                 >
                             </div>
-
                             <div
                                 class="mt-auto flex items-center justify-between border-t border-white/10 pt-4"
                             >
@@ -220,7 +371,6 @@ const getLocalizedName = (name) => {
                                         >৳{{ product.base_price }}</span
                                     >
                                 </div>
-
                                 <button
                                     @click.prevent="addToCart(product)"
                                     class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg shadow-white/10 hover:bg-indigo-500 hover:text-white hover:scale-110 hover:rotate-6 transition-all duration-300"
@@ -237,13 +387,14 @@ const getLocalizedName = (name) => {
                     class="text-center py-20 bg-white/5 rounded-3xl border border-white/10"
                 >
                     <p class="text-gray-400 text-lg">
-                        No products found in this category.
+                        No products match your filters.
                     </p>
-                    <Link
-                        href="/"
-                        class="mt-4 inline-block text-indigo-400 font-bold hover:underline"
-                        >Go Back Home</Link
+                    <button
+                        @click="resetFilters"
+                        class="mt-4 text-indigo-400 font-bold hover:underline"
                     >
+                        Clear Filters
+                    </button>
                 </div>
 
                 <div
@@ -270,3 +421,19 @@ const getLocalizedName = (name) => {
         </div>
     </MainLayout>
 </template>
+
+<style scoped>
+.animate-fade-in-up {
+    animation: fadeInUp 0.2s ease-out forwards;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+</style>

@@ -10,40 +10,57 @@ use Illuminate\Support\Facades\App;
 class ProductController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Product::query()
-            ->where('is_active', true)
-            ->with(['category']);
+{
+    $query = Product::query()
+        ->where('is_active', true)
+        ->with(['category']);
 
-        if ($request->has('category') && $request->category != null) {
-            $categoryName = $request->category;
-            $locale = App::getLocale();
-
-            $query->whereHas('category', function ($q) use ($categoryName, $locale) {
-                $q->whereRaw("name->>'$locale' = ?", [$categoryName])
-                  ->orWhereRaw("name->>'en' = ?", [$categoryName]);
-            });
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $locale = App::getLocale();
-
-            $query->where(function($q) use ($search, $locale) {
-                $q->whereRaw("name->>'$locale' ILIKE ?", ['%' . $search . '%'])
-                  ->orWhereRaw("name->>'en' ILIKE ?", ['%' . $search . '%']);
-            });
-        }
-
-        $query->latest();
-
-        $products = $query->paginate(12)->withQueryString();
-
-        return Inertia::render('Products/Index', [
-            'products' => $products,
-            'categoryName' => $request->category ?? 'All Products',
-        ]);
+    if ($request->has('category') && $request->category != null) {
+        $categoryName = $request->category;
+        $query->whereHas('category', function ($q) use ($categoryName) {
+            $q->where('name', 'like', '%' . $categoryName . '%');
+        });
     }
+
+    // 2. Price Filter (Min & Max)
+    if ($request->filled('min_price')) {
+        $query->where('base_price', '>=', $request->min_price);
+    }
+    if ($request->filled('max_price')) {
+        $query->where('base_price', '<=', $request->max_price);
+    }
+
+    // 3. Sorting
+    if ($request->has('sort')) {
+        switch ($request->sort) {
+            case 'price_low':
+                $query->orderBy('base_price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('base_price', 'desc');
+                break;
+            case 'newest':
+                $query->latest();
+                break;
+            case 'oldest':
+                $query->oldest();
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+    } else {
+        $query->latest();
+    }
+
+    $products = $query->paginate(12)->withQueryString();
+
+    return Inertia::render('Products/Index', [
+        'products' => $products,
+        'categoryName' => $request->category ?? 'All Products',
+        'filters' => $request->only(['search', 'min_price', 'max_price', 'sort', 'category']),
+    ]);
+}
 
     public function show($slug)
     {
