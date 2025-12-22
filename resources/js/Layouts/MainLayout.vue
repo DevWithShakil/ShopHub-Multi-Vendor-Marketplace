@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import {
     MagnifyingGlassIcon,
@@ -12,13 +12,12 @@ import {
     ChevronDownIcon,
     ArrowRightOnRectangleIcon,
     Squares2X2Icon,
-    UserCircleIcon,
     LanguageIcon,
-    TruckIcon,
-    ShieldCheckIcon,
 } from "@heroicons/vue/24/outline";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
+import axios from "axios";
+import debounce from "lodash/debounce"; // নিশ্চিত করুন lodash ইনস্টল আছে
 
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
@@ -33,6 +32,66 @@ onMounted(() => {
 
 const isMobileMenuOpen = ref(false);
 const isUserDropdownOpen = ref(false);
+
+// --- 🔍 Search Logic ---
+const searchQuery = ref("");
+const searchResults = ref([]);
+const isSearching = ref(false);
+const showDropdown = ref(false);
+
+// Helper to fix JSON Name issue
+const getLocalizedName = (nameField) => {
+    try {
+        const locale = page.props.locale || "en";
+        if (typeof nameField === "object" && nameField !== null) {
+            return nameField[locale] || nameField["en"] || "Unknown";
+        }
+        if (typeof nameField === "string" && nameField.startsWith("{")) {
+            const parsed = JSON.parse(nameField);
+            return parsed[locale] || parsed["en"];
+        }
+        return nameField;
+    } catch (e) {
+        return nameField;
+    }
+};
+
+// Debounced Search Function
+const performSearch = debounce(async (query) => {
+    if (query.length < 2) {
+        searchResults.value = [];
+        return;
+    }
+
+    isSearching.value = true;
+    try {
+        const response = await axios.get(route("api.search"), {
+            params: { query: query },
+        });
+        searchResults.value = response.data;
+        showDropdown.value = true;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        isSearching.value = false;
+    }
+}, 300);
+
+// Watcher
+watch(searchQuery, (newVal) => {
+    if (!newVal) {
+        searchResults.value = [];
+        showDropdown.value = false;
+    } else {
+        performSearch(newVal);
+    }
+});
+
+const closeSearch = () => {
+    setTimeout(() => {
+        showDropdown.value = false;
+    }, 200);
+};
 </script>
 
 <template>
@@ -68,16 +127,152 @@ const isUserDropdownOpen = ref(false);
                     </Link>
 
                     <div class="hidden md:flex flex-1 max-w-2xl relative group">
-                        <input
-                            type="text"
-                            :placeholder="__('Search for products...')"
-                            class="w-full bg-black/20 border border-white/10 rounded-full py-3 pl-5 pr-14 text-sm text-white placeholder-gray-500 focus:bg-black/40 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-inner"
-                        />
-                        <button
-                            class="absolute right-1.5 top-1.5 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-900/50 group-focus-within:scale-105"
+                        <div class="relative w-full">
+                            <input
+                                type="text"
+                                v-model="searchQuery"
+                                @focus="showDropdown = true"
+                                @blur="closeSearch"
+                                :placeholder="__('Search for products...')"
+                                class="w-full bg-black/20 border border-white/10 rounded-full py-3 pl-5 pr-14 text-sm text-white placeholder-gray-500 focus:bg-black/40 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-inner"
+                            />
+
+                            <div class="absolute right-1.5 top-1.5">
+                                <div v-if="isSearching" class="p-2">
+                                    <svg
+                                        class="animate-spin h-5 w-5 text-indigo-500"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            class="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            stroke-width="4"
+                                        ></circle>
+                                        <path
+                                            class="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                </div>
+                                <button
+                                    v-else
+                                    class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-900/50"
+                                >
+                                    <MagnifyingGlassIcon class="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="
+                                showDropdown &&
+                                (searchResults.length > 0 ||
+                                    (searchQuery.length > 1 && !isSearching))
+                            "
+                            class="absolute top-full left-0 w-full mt-2 bg-[#151925] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in-up backdrop-blur-xl"
                         >
-                            <MagnifyingGlassIcon class="w-5 h-5" />
-                        </button>
+                            <div v-if="searchResults.length > 0">
+                                <div
+                                    class="px-4 py-2 bg-white/5 border-b border-white/5 text-[10px] font-bold text-gray-500 uppercase tracking-wider"
+                                >
+                                    Products
+                                </div>
+                                <ul>
+                                    <li
+                                        v-for="result in searchResults"
+                                        :key="result.slug"
+                                    >
+                                        <Link
+                                            :href="
+                                                route(
+                                                    'product.details',
+                                                    result.slug
+                                                )
+                                            "
+                                            class="flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors group border-b border-white/5 last:border-0"
+                                        >
+                                            <div
+                                                class="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1 flex-shrink-0 overflow-hidden"
+                                            >
+                                                <img
+                                                    v-if="result.image"
+                                                    :src="
+                                                        '/storage/' +
+                                                        result.image
+                                                    "
+                                                    class="w-full h-full object-contain"
+                                                    alt="Product"
+                                                />
+                                                <ShoppingBagIcon
+                                                    v-else
+                                                    class="w-6 h-6 text-gray-400"
+                                                />
+                                            </div>
+
+                                            <div class="flex-1 min-w-0">
+                                                <h4
+                                                    class="text-sm font-bold text-gray-200 group-hover:text-indigo-400 truncate transition-colors"
+                                                >
+                                                    {{
+                                                        getLocalizedName(
+                                                            result.name
+                                                        )
+                                                    }}
+                                                </h4>
+                                                <p
+                                                    class="text-xs text-gray-500 truncate"
+                                                >
+                                                    {{
+                                                        getLocalizedName(
+                                                            result.category
+                                                        )
+                                                    }}
+                                                </p>
+                                            </div>
+
+                                            <div
+                                                class="text-sm font-bold text-white"
+                                            >
+                                                ৳{{ result.price }}
+                                            </div>
+                                        </Link>
+                                    </li>
+                                </ul>
+                                <Link
+                                    :href="
+                                        route('products.index', {
+                                            search: searchQuery,
+                                        })
+                                    "
+                                    class="block text-center py-3 bg-indigo-600/10 text-indigo-400 text-xs font-bold hover:bg-indigo-600 hover:text-white transition-colors uppercase tracking-wide"
+                                >
+                                    View all results for "{{ searchQuery }}"
+                                </Link>
+                            </div>
+
+                            <div
+                                v-else-if="
+                                    !isSearching && searchQuery.length > 1
+                                "
+                                class="p-8 text-center text-gray-400"
+                            >
+                                <MagnifyingGlassIcon
+                                    class="w-12 h-12 mx-auto mb-3 opacity-20"
+                                />
+                                <p class="text-sm">
+                                    No products found for "<span
+                                        class="text-white font-bold"
+                                        >{{ searchQuery }}</span
+                                    >"
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-3 md:gap-6">
@@ -124,9 +319,8 @@ const isUserDropdownOpen = ref(false);
                                 <span
                                     v-if="wishlistStore.count > 0"
                                     class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-pulse border border-[#0B0F19]"
+                                    >{{ wishlistStore.count }}</span
                                 >
-                                    {{ wishlistStore.count }}
-                                </span>
                             </div>
                         </Link>
 
@@ -141,9 +335,8 @@ const isUserDropdownOpen = ref(false);
                                 <span
                                     v-if="cartStore.itemCount > 0"
                                     class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold shadow-sm animate-bounce border border-[#0B0F19]"
+                                    >{{ cartStore.itemCount }}</span
                                 >
-                                    {{ cartStore.itemCount }}
-                                </span>
                             </div>
                         </Link>
 
@@ -229,7 +422,6 @@ const isUserDropdownOpen = ref(false);
                                     </Link>
                                 </div>
                             </div>
-
                             <div v-else class="flex items-center gap-3">
                                 <Link
                                     href="/login"
@@ -250,6 +442,8 @@ const isUserDropdownOpen = ref(false);
                     <div class="relative">
                         <input
                             type="text"
+                            v-model="searchQuery"
+                            @focus="showDropdown = true"
                             :placeholder="__('Search for products...')"
                             class="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-500"
                         />
@@ -260,159 +454,6 @@ const isUserDropdownOpen = ref(false);
                 </div>
             </div>
         </nav>
-
-        <div v-if="isMobileMenuOpen" class="relative z-[60]">
-            <div
-                @click="isMobileMenuOpen = false"
-                class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-            ></div>
-            <div
-                class="fixed inset-y-0 left-0 w-4/5 max-w-xs bg-[#0F131F] shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col border-r border-white/10"
-            >
-                <div
-                    class="bg-gradient-to-br from-slate-900 to-indigo-900 p-6 text-white relative overflow-hidden border-b border-white/10"
-                >
-                    <div
-                        class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"
-                    ></div>
-                    <div
-                        v-if="user"
-                        class="flex items-center gap-4 relative z-10"
-                    >
-                        <img
-                            :src="
-                                user.profile_photo_url ||
-                                `https://ui-avatars.com/api/?name=${user.name}&background=fff&color=4f46e5`
-                            "
-                            class="w-14 h-14 rounded-full border-2 border-white/20 shadow-md object-cover"
-                            alt="Avatar"
-                        />
-                        <div>
-                            <p class="font-bold text-lg leading-tight">
-                                {{ user.name }}
-                            </p>
-                            <p
-                                class="text-xs text-indigo-200 mt-1 truncate max-w-[150px]"
-                            >
-                                {{ user.email }}
-                            </p>
-                        </div>
-                    </div>
-                    <div v-else class="flex flex-col gap-4 relative z-10">
-                        <p class="font-bold text-xl">
-                            {{ __("Welcome Guest!") }}
-                        </p>
-                        <div class="flex gap-3">
-                            <Link
-                                href="/login"
-                                class="flex-1 text-center py-2 bg-white text-indigo-900 rounded-lg font-bold text-sm shadow-sm"
-                                >{{ __("Login") }}</Link
-                            >
-                            <Link
-                                href="/register"
-                                class="flex-1 text-center py-2 border border-white/30 text-white rounded-lg font-bold text-sm hover:bg-white/10"
-                                >{{ __("Register") }}</Link
-                            >
-                        </div>
-                    </div>
-                    <button
-                        @click="isMobileMenuOpen = false"
-                        class="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition"
-                    >
-                        <XMarkIcon class="w-6 h-6 text-white" />
-                    </button>
-                </div>
-
-                <div class="flex-1 overflow-y-auto p-5 space-y-2">
-                    <div
-                        class="flex items-center justify-between px-4 py-3 mb-6 bg-white/5 rounded-xl border border-white/10"
-                    >
-                        <div class="flex items-center gap-2 text-gray-400">
-                            <LanguageIcon class="w-5 h-5" />
-                            <span class="text-sm font-bold">Language</span>
-                        </div>
-                        <div class="flex bg-black/20 rounded-lg p-1">
-                            <a
-                                href="/language/bn"
-                                class="px-3 py-1 text-xs font-bold rounded-md transition"
-                                :class="
-                                    $page.props.locale === 'bn'
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'text-gray-500'
-                                "
-                                >BN</a
-                            >
-                            <a
-                                href="/language/en"
-                                class="px-3 py-1 text-xs font-bold rounded-md transition"
-                                :class="
-                                    $page.props.locale === 'en'
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'text-gray-500'
-                                "
-                                >EN</a
-                            >
-                        </div>
-                    </div>
-
-                    <p
-                        class="text-xs font-bold text-gray-500 uppercase tracking-wider px-2 pb-2"
-                    >
-                        {{ __("Menu") }}
-                    </p>
-                    <Link
-                        href="/"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-white font-medium transition"
-                        ><ShoppingBagIcon class="w-5 h-5" />
-                        {{ __("Home") }}</Link
-                    >
-                    <Link
-                        :href="route('wishlist.index')"
-                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-rose-500 font-medium transition"
-                    >
-                        <div class="flex items-center gap-4">
-                            <HeartIcon class="w-5 h-5" /> {{ __("Wishlist") }}
-                        </div>
-                        <span
-                            v-if="wishlistStore.count > 0"
-                            class="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
-                            >{{ wishlistStore.count }}</span
-                        >
-                    </Link>
-                    <Link
-                        :href="route('cart.index')"
-                        class="flex items-center justify-between px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-indigo-400 font-medium transition"
-                    >
-                        <div class="flex items-center gap-4">
-                            <ShoppingBagIcon class="w-5 h-5" /> {{ __("Cart") }}
-                        </div>
-                        <span
-                            v-if="cartStore.itemCount > 0"
-                            class="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full"
-                            >{{ cartStore.itemCount }}</span
-                        >
-                    </Link>
-
-                    <div class="my-4 border-t border-white/10"></div>
-                    <Link
-                        v-if="user"
-                        href="/dashboard"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 hover:text-white font-medium transition"
-                        ><Squares2X2Icon class="w-5 h-5" />
-                        {{ __("Dashboard") }}</Link
-                    >
-                    <Link
-                        v-if="user"
-                        href="/logout"
-                        method="post"
-                        as="button"
-                        class="flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 font-medium transition w-full"
-                        ><ArrowRightOnRectangleIcon class="w-5 h-5" />
-                        {{ __("Logout") }}</Link
-                    >
-                </div>
-            </div>
-        </div>
 
         <main class="flex-grow">
             <slot />
@@ -440,7 +481,6 @@ const isUserDropdownOpen = ref(false);
                         <p class="text-gray-400 leading-relaxed text-sm">
                             The premium destination for all your shopping needs.
                         </p>
-
                         <div class="space-y-2 pt-2">
                             <p
                                 class="flex items-center gap-3 text-gray-400 text-sm hover:text-white transition"
@@ -455,26 +495,7 @@ const isUserDropdownOpen = ref(false);
                                 support@shophub.com
                             </p>
                         </div>
-
-                        <div class="flex items-center gap-4 pt-2">
-                            <div
-                                class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-indigo-600 transition cursor-pointer text-gray-400 hover:text-white"
-                            >
-                                <span class="font-bold text-xs">FB</span>
-                            </div>
-                            <div
-                                class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-sky-500 transition cursor-pointer text-gray-400 hover:text-white"
-                            >
-                                <span class="font-bold text-xs">TW</span>
-                            </div>
-                            <div
-                                class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-600 transition cursor-pointer text-gray-400 hover:text-white"
-                            >
-                                <span class="font-bold text-xs">IG</span>
-                            </div>
-                        </div>
                     </div>
-
                     <div>
                         <h4
                             class="text-white font-bold text-lg mb-6 flex items-center gap-2"
@@ -506,16 +527,8 @@ const isUserDropdownOpen = ref(false);
                                     >Discounted</Link
                                 >
                             </li>
-                            <li>
-                                <Link
-                                    href="#"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block font-bold text-white"
-                                    >{{ __("Sell on ShopHub") }}</Link
-                                >
-                            </li>
                         </ul>
                     </div>
-
                     <div>
                         <h4
                             class="text-white font-bold text-lg mb-6 flex items-center gap-2"
@@ -529,8 +542,8 @@ const isUserDropdownOpen = ref(false);
                             <li>
                                 <Link
                                     href="/dashboard/orders"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block font-bold text-white"
-                                    >{{ __("Track Order") }}</Link
+                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
+                                    >Track Order</Link
                                 >
                             </li>
                             <li>
@@ -547,16 +560,8 @@ const isUserDropdownOpen = ref(false);
                                     >Returns & Refunds</Link
                                 >
                             </li>
-                            <li>
-                                <Link
-                                    href="#"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
-                                    >Contact Us</Link
-                                >
-                            </li>
                         </ul>
                     </div>
-
                     <div
                         class="bg-white/5 p-6 rounded-2xl border border-white/5 backdrop-blur-sm"
                     >
@@ -586,7 +591,6 @@ const isUserDropdownOpen = ref(false);
                         </form>
                     </div>
                 </div>
-
                 <div
                     class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4"
                 >

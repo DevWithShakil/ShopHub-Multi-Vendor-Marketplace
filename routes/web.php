@@ -72,4 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// API Search Route
+Route::get('/api/search', [HomeController::class, 'search'])->name('api.search');
+
 require __DIR__.'/auth.php';
