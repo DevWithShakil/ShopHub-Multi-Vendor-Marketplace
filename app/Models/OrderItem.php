@@ -10,6 +10,7 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $guarded = [];
+
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -29,4 +30,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(ProductVariant::class);
     }
+
+   public function review()
+{
+    return $this->hasOne(Review::class, 'product_id', 'product_id');
+}
 }

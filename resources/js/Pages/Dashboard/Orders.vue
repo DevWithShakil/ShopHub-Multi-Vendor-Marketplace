@@ -107,9 +107,13 @@ defineProps({
                                                 'bg-blue-500/10 text-blue-400 border-blue-500/20':
                                                     order.status ===
                                                     'processing',
+                                                'bg-purple-500/10 text-purple-400 border-purple-500/20':
+                                                    order.status === 'shipped',
                                                 'bg-green-500/10 text-green-400 border-green-500/20':
                                                     order.status ===
-                                                    'completed',
+                                                        'delivered' ||
+                                                    order.status ===
+                                                        'completed',
                                                 'bg-rose-500/10 text-rose-400 border-rose-500/20':
                                                     order.status ===
                                                     'cancelled',
@@ -124,9 +128,14 @@ defineProps({
                                                     'bg-blue-400':
                                                         order.status ===
                                                         'processing',
+                                                    'bg-purple-400':
+                                                        order.status ===
+                                                        'shipped',
                                                     'bg-green-400':
                                                         order.status ===
-                                                        'completed',
+                                                            'delivered' ||
+                                                        order.status ===
+                                                            'completed',
                                                     'bg-rose-400':
                                                         order.status ===
                                                         'cancelled',
@@ -137,7 +146,12 @@ defineProps({
                                     </td>
                                     <td class="p-6 text-right">
                                         <Link
-                                            href="#"
+                                            :href="
+                                                route(
+                                                    'dashboard.order.details',
+                                                    order.invoice_no
+                                                )
+                                            "
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
                                         >
                                             <EyeIcon class="w-4 h-4" /> View

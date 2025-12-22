@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -53,6 +56,28 @@ class DashboardController extends Controller
             'orders' => $orders
         ]);
     }
+
+public function orderDetails($invoice_no)
+{
+    $userId = Auth::id();
+
+    $order = Order::with(['items.product'])
+        ->where('invoice_no', $invoice_no)
+        ->where('user_id', $userId)
+        ->firstOrFail();
+
+    $order->items->each(function ($item) use ($userId) {
+        $item->setRelation('review', Review::where('order_id', $item->order_id)
+            ->where('product_id', $item->product_id)
+            ->where('user_id', $userId)
+            ->first()
+        );
+    });
+
+    return Inertia::render('Dashboard/OrderDetails', [
+        'order' => $order
+    ]);
+}
 
     public function profile()
     {

@@ -14,6 +14,8 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Columns\TextColumn;
 
 class OrderResource extends Resource
 {
@@ -26,16 +28,19 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Order Status')
+                Section::make('Order Information')
                     ->schema([
                         TextInput::make('invoice_no')
-                            ->disabled(),
+                            ->label('Invoice Number')
+                            ->disabled()
+                            ->required(),
 
                         Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
                                 'processing' => 'Processing',
-                                'completed' => 'Completed',
+                                'shipped' => 'Shipped',
+                                'delivered' => 'Delivered',
                                 'cancelled' => 'Cancelled',
                             ])
                             ->required()
@@ -46,24 +51,38 @@ class OrderResource extends Resource
                                 'pending' => 'Pending',
                                 'paid' => 'Paid',
                                 'failed' => 'Failed',
-                            ]),
-                    ])->columns(3),
+                            ])
+                            ->required()
+                            ->native(false),
+
+                        Select::make('payment_method')
+                            ->options([
+                                'cod' => 'Cash On Delivery',
+                                'sslcommerz' => 'Online Payment',
+                            ])
+                            ->disabled(),
+                    ])->columns(2),
 
                 Section::make('Customer Details')
                     ->schema([
-                        TextInput::make('address_details.name')
+
+                        TextInput::make('name')
                             ->label('Customer Name')
                             ->disabled(),
 
-                        TextInput::make('address_details.phone')
-                            ->label('Phone')
+                        TextInput::make('phone')
+                            ->label('Phone Number')
                             ->disabled(),
 
-                        Textarea::make('address_details.address')
-                            ->label('Address')
+                        TextInput::make('city')
+                            ->label('City')
+                            ->disabled(),
+
+                        Textarea::make('address')
+                            ->label('Delivery Address')
                             ->columnSpanFull()
                             ->disabled(),
-                    ])->columns(2),
+                    ])->columns(3),
             ]);
     }
 
@@ -71,42 +90,69 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('invoice_no')
+                TextColumn::make('invoice_no')
+                    ->label('Invoice')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->copyable(),
 
-                Tables\Columns\TextColumn::make('address_details.name')
-                    ->label('Customer'),
+                TextColumn::make('name')
+                    ->label('Customer')
+                    ->searchable(),
 
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->money('BDT')
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold'),
+                SelectColumn::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'shipped' => 'Shipped',
+                        'delivered' => 'Delivered',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->searchable()
+                    ->sortable()
+                    ->afterStateUpdated(function ($record, $state) {
+                        if ($state === 'delivered' && $record->payment_method === 'cod') {
+                            $record->update(['payment_status' => 'paid']);
+                        }
+                    }),
 
-                Tables\Columns\BadgeColumn::make('status')
+                TextColumn::make('payment_status')
+                    ->badge()
                     ->colors([
+                        'danger' => 'failed',
                         'warning' => 'pending',
-                        'info' => 'processing',
-                        'success' => 'completed',
-                        'danger' => 'cancelled',
+                        'success' => 'paid',
                     ]),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
-                    ->label('Date'),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Order Date'),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 
     public static function getRelations(): array
-{
-    return [
-        ItemsRelationManager::class,
-    ];
-}
+    {
+        return [
+            ItemsRelationManager::class,
+        ];
+    }
 
     public static function getPages(): array
     {
@@ -115,5 +161,10 @@ class OrderResource extends Resource
             'create' => Pages\CreateOrder::route('/create'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('status', 'pending')->count();
     }
 }
