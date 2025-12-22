@@ -12,14 +12,15 @@ import {
     ChevronRightIcon,
     ChevronLeftIcon,
     EyeIcon,
+    TagIcon,
     FireIcon,
 } from "@heroicons/vue/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 
-defineProps({
+const props = defineProps({
     products: Array,
 });
 
@@ -88,6 +89,63 @@ const addToCart = (product) => {
 };
 const toggleWishlist = (product) => {
     wishlistStore.toggle(product.id);
+};
+
+// --- 📂 Category Logic ---
+const productsByCategory = computed(() => {
+    const grouped = {};
+    props.products.forEach((product) => {
+        const catName = product.category?.name || "General";
+        if (!grouped[catName]) {
+            grouped[catName] = [];
+        }
+        grouped[catName].push(product);
+    });
+    return grouped;
+});
+
+const categoriesList = computed(() => {
+    const cats = new Set();
+    props.products.forEach((p) => {
+        if (p.category?.name) cats.add(p.category.name);
+    });
+    return Array.from(cats);
+});
+
+// 🛠️ Horizontal Scroll inside section
+const scrollContainer = (id, direction) => {
+    const container = document.getElementById(id);
+    if (container) {
+        const scrollAmount = 320;
+        if (direction === "left")
+            container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        else container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+};
+
+// 🚀 Scroll To Category Section (New Feature)
+const scrollToSection = (categoryName) => {
+    const elementId = "cat-section-" + categoryName;
+    const element = document.getElementById(elementId);
+
+    if (element) {
+        // Navbar (80px) + Category Bar (80px) = Total Offset ~160px
+        // একটু বেশি গ্যাপ (200px) রাখছি যাতে দেখতে সুন্দর লাগে
+        const offset = 220;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+        });
+    }
+};
+
+const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 </script>
 
@@ -223,7 +281,34 @@ const toggleWishlist = (product) => {
             </div>
         </div>
 
-        <div class="bg-[#0B0F19] py-24 relative overflow-hidden">
+        <div
+            class="bg-[#0B0F19]/95 border-b border-white/10 py-6 sticky top-[80px] z-40 backdrop-blur-xl shadow-lg transition-all"
+        >
+            <div class="container mx-auto px-4 lg:px-8">
+                <div
+                    class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2"
+                >
+                    <button
+                        @click="scrollToTop"
+                        class="px-6 py-2.5 rounded-full bg-white text-gray-900 text-sm font-bold whitespace-nowrap shadow-lg shadow-white/10 hover:scale-105 transition-transform flex items-center gap-2"
+                    >
+                        <FireIcon class="w-4 h-4 text-orange-500" /> All
+                        Categories
+                    </button>
+
+                    <button
+                        v-for="cat in categoriesList"
+                        :key="cat"
+                        @click="scrollToSection(cat)"
+                        class="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-sm font-semibold whitespace-nowrap hover:bg-white/10 hover:text-white transition-colors hover:border-indigo-500/50"
+                    >
+                        {{ cat }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[#0B0F19] py-16 relative overflow-hidden">
             <div
                 class="absolute top-20 left-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"
             ></div>
@@ -231,162 +316,195 @@ const toggleWishlist = (product) => {
                 class="absolute bottom-20 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"
             ></div>
 
-            <div class="container mx-auto px-4 lg:px-8 relative z-10">
+            <div
+                class="container mx-auto px-4 lg:px-8 relative z-10 space-y-20"
+            >
                 <div
-                    class="flex justify-between items-end mb-12 border-b border-white/10 pb-6"
-                >
-                    <div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <FireIcon
-                                class="w-6 h-6 text-orange-500 animate-pulse"
-                            />
-                            <span
-                                class="text-sm font-bold text-orange-500 uppercase tracking-widest"
-                                >{{ __("Hot Deals") }}</span
-                            >
-                        </div>
-                        <h2
-                            class="text-4xl font-black text-white tracking-tight"
-                        >
-                            {{ __("Trending Now") }}
-                        </h2>
-                    </div>
-                    <Link
-                        href="#"
-                        class="hidden md:flex items-center gap-2 text-sm font-bold text-white hover:text-indigo-400 transition bg-white/5 px-4 py-2 rounded-full border border-white/10"
-                    >
-                        {{ __("View All Products") }}
-                        <ArrowRightIcon class="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+                    v-for="(catProducts, categoryName) in productsByCategory"
+                    :key="categoryName"
+                    :id="'cat-section-' + categoryName"
                 >
                     <div
-                        v-for="product in products"
-                        :key="product.id"
-                        class="group relative bg-white/5 backdrop-blur-sm rounded-3xl p-4 border border-white/10 hover:border-indigo-500/50 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20"
+                        class="flex justify-between items-end mb-8 border-b border-white/10 pb-4"
                     >
-                        <div
-                            class="relative h-60 rounded-2xl bg-white overflow-hidden mb-4"
-                        >
-                            <Link
-                                :href="route('product.details', product.slug)"
-                                class="block w-full h-full"
-                            >
-                                <img
-                                    v-if="product.thumb_image"
-                                    :src="'/storage/' + product.thumb_image"
-                                    :alt="product.name"
-                                    class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-out"
-                                />
-                                <div
-                                    v-else
-                                    class="w-full h-full flex items-center justify-center text-gray-300"
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <TagIcon class="w-5 h-5 text-indigo-400" />
+                                <span
+                                    class="text-xs font-bold text-indigo-400 uppercase tracking-widest"
+                                    >{{ categoryName }} Collection</span
                                 >
-                                    No Image
-                                </div>
+                            </div>
+                            <h2
+                                class="text-3xl font-black text-white tracking-tight"
+                            >
+                                {{ categoryName }}
+                            </h2>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <Link
+                                href="#"
+                                class="text-sm font-bold text-white hover:text-indigo-400 transition flex items-center gap-1"
+                            >
+                                {{ __("See All") }}
+                                <ArrowRightIcon class="w-4 h-4" />
                             </Link>
 
-                            <span
-                                v-if="product.discount_price"
-                                class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
-                            >
-                                Sale
-                            </span>
-
-                            <div
-                                class="absolute top-3 right-3 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300"
-                            >
+                            <div class="hidden md:flex gap-2">
                                 <button
-                                    @click.prevent="toggleWishlist(product)"
-                                    class="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-500 hover:text-red-500 transition-colors"
+                                    @click="
+                                        scrollContainer(
+                                            'scroll-' + categoryName,
+                                            'left'
+                                        )
+                                    "
+                                    class="p-2 rounded-full border border-white/10 text-white hover:bg-white/10 transition"
                                 >
-                                    <HeartSolidIcon
-                                        v-if="
-                                            wishlistStore.isInWishlist(
-                                                product.id
-                                            )
-                                        "
-                                        class="w-5 h-5 text-red-500 animate-pulse"
-                                    />
-                                    <HeartIcon v-else class="w-5 h-5" />
+                                    <ChevronLeftIcon class="w-5 h-5" />
                                 </button>
+                                <button
+                                    @click="
+                                        scrollContainer(
+                                            'scroll-' + categoryName,
+                                            'right'
+                                        )
+                                    "
+                                    class="p-2 rounded-full border border-white/10 text-white hover:bg-white/10 transition"
+                                >
+                                    <ChevronRightIcon class="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        :id="'scroll-' + categoryName"
+                        class="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-4"
+                    >
+                        <div
+                            v-for="product in catProducts.slice(0, 8)"
+                            :key="product.id"
+                            class="min-w-[260px] w-[260px] group relative bg-white/5 backdrop-blur-sm rounded-3xl p-4 border border-white/10 hover:border-indigo-500/50 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col h-full"
+                        >
+                            <div
+                                class="relative h-56 rounded-2xl bg-white overflow-hidden mb-4 flex-shrink-0"
+                            >
                                 <Link
                                     :href="
                                         route('product.details', product.slug)
                                     "
-                                    class="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-500 hover:text-indigo-600 transition-colors"
+                                    class="block w-full h-full"
                                 >
-                                    <EyeIcon class="w-5 h-5" />
+                                    <img
+                                        v-if="product.thumb_image"
+                                        :src="'/storage/' + product.thumb_image"
+                                        :alt="product.name"
+                                        class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-out"
+                                    />
+                                    <div
+                                        v-else
+                                        class="w-full h-full flex items-center justify-center text-gray-300"
+                                    >
+                                        No Image
+                                    </div>
                                 </Link>
-                            </div>
-                        </div>
 
-                        <div class="px-1">
-                            <p
-                                class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1"
-                            >
-                                {{ product.category?.name || "General" }}
-                            </p>
-
-                            <Link
-                                :href="route('product.details', product.slug)"
-                            >
-                                <h3
-                                    class="font-bold text-lg text-white leading-snug group-hover:text-indigo-400 transition-colors mb-2 line-clamp-2"
+                                <span
+                                    v-if="product.discount_price"
+                                    class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
+                                    >Sale</span
                                 >
-                                    {{ product.name }}
-                                </h3>
-                            </Link>
 
-                            <div class="flex items-center gap-1 mb-4">
-                                <div class="flex text-yellow-400">
-                                    <StarIcon
-                                        class="w-3.5 h-3.5 fill-current"
-                                    />
-                                    <StarIcon
-                                        class="w-3.5 h-3.5 fill-current"
-                                    />
-                                    <StarIcon
-                                        class="w-3.5 h-3.5 fill-current"
-                                    />
-                                    <StarIcon
-                                        class="w-3.5 h-3.5 fill-current"
-                                    />
-                                    <StarIcon
-                                        class="w-3.5 h-3.5 text-white/20"
-                                    />
+                                <div
+                                    class="absolute top-3 right-3 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300"
+                                >
+                                    <button
+                                        @click.prevent="toggleWishlist(product)"
+                                        class="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-500 hover:text-red-500 transition-colors"
+                                    >
+                                        <HeartSolidIcon
+                                            v-if="
+                                                wishlistStore.isInWishlist(
+                                                    product.id
+                                                )
+                                            "
+                                            class="w-5 h-5 text-red-500 animate-pulse"
+                                        />
+                                        <HeartIcon v-else class="w-5 h-5" />
+                                    </button>
+                                    <Link
+                                        :href="
+                                            route(
+                                                'product.details',
+                                                product.slug
+                                            )
+                                        "
+                                        class="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg text-gray-500 hover:text-indigo-600 transition-colors"
+                                    >
+                                        <EyeIcon class="w-5 h-5" />
+                                    </Link>
                                 </div>
-                                <span class="text-xs font-bold text-gray-400"
-                                    >(4.5)</span
-                                >
                             </div>
 
-                            <div
-                                class="flex items-center justify-between border-t border-white/10 pt-4"
-                            >
-                                <div class="flex flex-col">
-                                    <span
-                                        v-if="product.discount_price"
-                                        class="text-xs text-gray-500 line-through font-medium"
-                                        >৳{{
-                                            parseInt(product.base_price) + 500
-                                        }}</span
+                            <div class="px-1 flex-1 flex flex-col">
+                                <p
+                                    class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1"
+                                >
+                                    {{ product.category?.name || "General" }}
+                                </p>
+
+                                <Link
+                                    :href="
+                                        route('product.details', product.slug)
+                                    "
+                                >
+                                    <h3
+                                        class="font-bold text-sm md:text-base text-white leading-tight group-hover:text-indigo-400 transition-colors mb-2 line-clamp-2 min-h-[2.5rem]"
+                                        :title="product.name"
                                     >
+                                        {{ product.name }}
+                                    </h3>
+                                </Link>
+
+                                <div class="flex items-center gap-1 mb-4">
+                                    <div class="flex text-yellow-400">
+                                        <StarIcon
+                                            v-for="i in 5"
+                                            :key="i"
+                                            class="w-3.5 h-3.5 fill-current"
+                                        />
+                                    </div>
                                     <span
-                                        class="text-xl font-black text-white tracking-tight"
-                                        >৳{{ product.base_price }}</span
+                                        class="text-xs font-bold text-gray-400"
+                                        >(4.5)</span
                                     >
                                 </div>
 
-                                <button
-                                    @click.prevent="addToCart(product)"
-                                    class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg shadow-white/10 hover:bg-indigo-500 hover:text-white hover:scale-110 hover:rotate-6 transition-all duration-300"
+                                <div
+                                    class="mt-auto flex items-center justify-between border-t border-white/10 pt-4"
                                 >
-                                    <ShoppingCartIcon class="w-5 h-5" />
-                                </button>
+                                    <div class="flex flex-col">
+                                        <span
+                                            v-if="product.discount_price"
+                                            class="text-xs text-gray-500 line-through font-medium"
+                                            >৳{{
+                                                parseInt(product.base_price) +
+                                                500
+                                            }}</span
+                                        >
+                                        <span
+                                            class="text-lg font-black text-white tracking-tight"
+                                            >৳{{ product.base_price }}</span
+                                        >
+                                    </div>
+
+                                    <button
+                                        @click.prevent="addToCart(product)"
+                                        class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg shadow-white/10 hover:bg-indigo-500 hover:text-white hover:scale-110 hover:rotate-6 transition-all duration-300"
+                                    >
+                                        <ShoppingCartIcon class="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -397,6 +515,14 @@ const toggleWishlist = (product) => {
 </template>
 
 <style scoped>
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 /* Animations */
 .animate-fade-in-up {
     animation: fadeInUp 0.8s ease-out forwards;
