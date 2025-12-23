@@ -7,17 +7,18 @@ import {
     ArrowRightIcon,
     HeartIcon,
     SparklesIcon,
-    TruckIcon,
-    ShieldCheckIcon,
     ChevronRightIcon,
     ChevronLeftIcon,
     EyeIcon,
     TagIcon,
     FireIcon,
 } from "@heroicons/vue/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
+import {
+    HeartIcon as HeartSolidIcon,
+    StarIcon as StarSolidIcon,
+} from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
-import { useWishlistStore } from "@/Stores/wishlistStore"; // ✅ Wishlist Store
+import { useWishlistStore } from "@/Stores/wishlistStore";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 
 const props = defineProps({
@@ -26,9 +27,9 @@ const props = defineProps({
 
 const page = usePage();
 const cartStore = useCartStore();
-const wishlistStore = useWishlistStore(); // ✅ Wishlist Init
+const wishlistStore = useWishlistStore();
 
-// --- 🛠️ Helper: Get Localized Name (JSON Fix) ---
+// --- 🛠️ Helper: Get Localized Name ---
 const getLocalizedName = (nameField) => {
     try {
         if (typeof nameField === "string" && nameField.startsWith("{")) {
@@ -47,39 +48,30 @@ const getLocalizedName = (nameField) => {
 // --- 📂 Category Grouping Logic ---
 const getRootCategory = (category) => {
     if (!category) return "Uncategorized";
-
     let current = category;
     while (current.parent) {
         current = current.parent;
     }
-    // মেইন ক্যাটাগরির নামও লোকালাইজ করা হচ্ছে
     return getLocalizedName(current.name);
 };
 
 const productsByCategory = computed(() => {
     const grouped = {};
-
     props.products.forEach((product) => {
         if (!product.category) return;
-
         const rootCatName = getRootCategory(product.category);
-
         if (!grouped[rootCatName]) {
             grouped[rootCatName] = {
                 products: [],
                 subCategories: new Set(),
             };
         }
-
         grouped[rootCatName].products.push(product);
-
-        // সাব-ক্যাটাগরি নামগুলো কালেক্ট করা
         const currentCatName = getLocalizedName(product.category.name);
         if (currentCatName !== rootCatName) {
             grouped[rootCatName].subCategories.add(currentCatName);
         }
     });
-
     return grouped;
 });
 
@@ -99,7 +91,6 @@ const slides = [
         bgClass: "from-slate-900 via-purple-900 to-slate-900",
         btnClass: "bg-purple-500 hover:bg-purple-600",
         image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-        floatingText: "Immersive Sound",
         price: "৳25,000",
     },
     {
@@ -111,7 +102,6 @@ const slides = [
         bgClass: "from-orange-900 via-red-900 to-slate-900",
         btnClass: "bg-orange-500 hover:bg-orange-600",
         image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2070&auto=format&fit=crop",
-        floatingText: "Premium Cotton",
         price: "৳1,200",
     },
     {
@@ -123,7 +113,6 @@ const slides = [
         bgClass: "from-emerald-900 via-teal-900 to-slate-900",
         btnClass: "bg-emerald-500 hover:bg-emerald-600",
         image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=2064&auto=format&fit=crop",
-        floatingText: "Water Proof",
         price: "৳5,500",
     },
 ];
@@ -167,7 +156,7 @@ const scrollToSection = (categoryName) => {
     const elementId = "cat-section-" + categoryName;
     const element = document.getElementById(elementId);
     if (element) {
-        const offset = 220;
+        const offset = 180;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = element.getBoundingClientRect().top;
         const elementPosition = elementRect - bodyRect;
@@ -220,7 +209,7 @@ const scrollToTop = () => {
                         >
                             {{ slides[currentSlide].title }} <br />
                             <span
-                                :class="'text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400'"
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400"
                             >
                                 {{ slides[currentSlide].highlight }}
                             </span>
@@ -372,7 +361,6 @@ const scrollToTop = () => {
                                 </Link>
                             </div>
                         </div>
-
                         <div
                             class="flex items-center gap-4 self-end md:self-auto"
                         >
@@ -445,7 +433,6 @@ const scrollToTop = () => {
                                         No Image
                                     </div>
                                 </Link>
-
                                 <span
                                     v-if="product.discount_price"
                                     class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
@@ -491,7 +478,6 @@ const scrollToTop = () => {
                                         getLocalizedName(product.category?.name)
                                     }}
                                 </p>
-
                                 <Link
                                     :href="
                                         route('product.details', product.slug)
@@ -505,9 +491,17 @@ const scrollToTop = () => {
                                     </h3>
                                 </Link>
 
-                                <div class="flex items-center gap-1 mb-4">
-                                    <div class="flex items-center">
-                                        <StarIcon
+                                <Link
+                                    :href="
+                                        route('product.details', product.slug) +
+                                        '#reviews'
+                                    "
+                                    class="flex items-center gap-1 mb-4 cursor-pointer group/rating w-fit"
+                                >
+                                    <div
+                                        class="flex text-yellow-400 group-hover/rating:scale-105 transition-transform duration-300"
+                                    >
+                                        <StarSolidIcon
                                             v-for="i in 5"
                                             :key="i"
                                             class="w-3.5 h-3.5"
@@ -517,28 +511,31 @@ const scrollToTop = () => {
                                                     product.reviews_avg_rating ||
                                                         0
                                                 )
-                                                    ? 'text-yellow-400 fill-current'
-                                                    : 'text-gray-600'
+                                                    ? 'fill-current'
+                                                    : 'text-gray-600 fill-none'
                                             "
                                         />
                                     </div>
-                                    <span
-                                        class="text-xs font-bold text-gray-400 ml-1"
+                                    <div
+                                        class="flex items-center gap-1 group-hover/rating:text-white transition-colors"
                                     >
-                                        ({{
-                                            product.reviews_avg_rating
-                                                ? parseFloat(
-                                                      product.reviews_avg_rating
-                                                  ).toFixed(1)
-                                                : "0.0"
-                                        }})
-                                        <span class="mx-1 text-gray-600"
-                                            >|</span
+                                        <span
+                                            class="text-xs font-bold text-gray-400 ml-1"
+                                            >({{
+                                                product.reviews_avg_rating
+                                                    ? parseFloat(
+                                                          product.reviews_avg_rating
+                                                      ).toFixed(1)
+                                                    : "0.0"
+                                            }})</span
                                         >
-                                        {{ product.reviews_count || 0 }}
-                                        {{ __("Reviews") }}
-                                    </span>
-                                </div>
+                                        <span
+                                            class="text-[10px] text-gray-500 ml-1 decoration-gray-600 group-hover/rating:underline"
+                                            >| {{ product.reviews_count || 0 }}
+                                            {{ __("Reviews") }}</span
+                                        >
+                                    </div>
+                                </Link>
 
                                 <div
                                     class="mt-auto flex items-center justify-between border-t border-white/10 pt-4"
@@ -581,7 +578,6 @@ const scrollToTop = () => {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-/* Animations */
 .animate-fade-in-up {
     animation: fadeInUp 0.8s ease-out forwards;
 }
@@ -590,9 +586,6 @@ const scrollToTop = () => {
 }
 .animate-scale-up {
     animation: scaleUp 0.8s ease-out forwards;
-}
-.animate-bounce-slow {
-    animation: bounce 4s infinite;
 }
 @keyframes fadeInUp {
     from {
@@ -622,15 +615,6 @@ const scrollToTop = () => {
     to {
         opacity: 1;
         transform: scale(1);
-    }
-}
-@keyframes bounce {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
     }
 }
 </style>

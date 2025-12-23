@@ -13,8 +13,12 @@ import {
     CheckBadgeIcon,
     MinusIcon,
     PlusIcon,
+    ChatBubbleLeftRightIcon,
 } from "@heroicons/vue/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/vue/24/solid";
+import {
+    HeartIcon as HeartSolidIcon,
+    StarIcon as StarSolidIcon,
+} from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
 
@@ -60,6 +64,14 @@ const addToCart = () => {
 const toggleWishlist = () => {
     wishlistStore.toggle(props.product.id);
 };
+
+// 🚀 Scroll to Reviews Function
+const scrollToReviews = () => {
+    const element = document.getElementById("reviews");
+    if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+};
 </script>
 
 <template>
@@ -93,7 +105,7 @@ const toggleWishlist = () => {
                     }}</span>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
                     <div class="space-y-6">
                         <div
                             class="relative bg-white rounded-3xl p-8 h-[450px] flex items-center justify-center overflow-hidden group shadow-2xl shadow-indigo-900/20 border border-white/5"
@@ -103,14 +115,11 @@ const toggleWishlist = () => {
                                 class="h-full object-contain group-hover:scale-110 transition duration-700 ease-out mix-blend-multiply"
                                 :alt="getLocalizedName(product.name)"
                             />
-
                             <span
                                 v-if="product.discount_price"
                                 class="absolute top-6 left-6 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10 uppercase tracking-widest"
+                                >Sale</span
                             >
-                                Sale
-                            </span>
-
                             <button
                                 class="absolute top-6 right-6 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition text-gray-600"
                             >
@@ -135,7 +144,6 @@ const toggleWishlist = () => {
                                     class="w-full h-full object-contain mix-blend-multiply"
                                 />
                             </button>
-
                             <button
                                 v-for="(img, index) in product.gallery_images"
                                 :key="index"
@@ -163,9 +171,13 @@ const toggleWishlist = () => {
                         </h1>
 
                         <div class="flex items-center gap-6 mb-8 text-sm">
-                            <div class="flex items-center gap-1 mb-4">
+                            <div
+                                @click="scrollToReviews"
+                                class="flex items-center gap-1 mb-4 cursor-pointer group hover:opacity-80 transition-opacity"
+                                title="Click to see reviews"
+                            >
                                 <div class="flex text-yellow-400">
-                                    <StarIcon
+                                    <StarSolidIcon
                                         v-for="i in 5"
                                         :key="i"
                                         class="w-3.5 h-3.5"
@@ -181,19 +193,22 @@ const toggleWishlist = () => {
                                 </div>
                                 <span
                                     class="text-xs font-bold text-gray-400 ml-1"
-                                >
-                                    ({{
+                                    >({{
                                         product.reviews_avg_rating
                                             ? parseFloat(
                                                   product.reviews_avg_rating
                                               ).toFixed(1)
                                             : "0.0"
-                                    }})
-                                </span>
-                                <span class="text-[10px] text-gray-500 ml-1">
-                                    | {{ product.reviews_count || 0 }} Reviews
-                                </span>
+                                    }})</span
+                                >
+                                <span
+                                    class="text-[10px] text-gray-500 ml-1 group-hover:text-indigo-400 group-hover:underline"
+                                    >|
+                                    {{ product.reviews_count || 0 }}
+                                    Reviews</span
+                                >
                             </div>
+
                             <div
                                 class="flex items-center gap-1 text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20"
                             >
@@ -211,9 +226,10 @@ const toggleWishlist = () => {
                                 <span
                                     v-if="product.discount_price"
                                     class="text-xl text-gray-500 line-through mb-1"
+                                    >৳{{
+                                        parseInt(product.base_price) + 500
+                                    }}</span
                                 >
-                                    ৳{{ parseInt(product.base_price) + 500 }}
-                                </span>
                             </div>
                             <p class="text-sm text-indigo-400 mt-2 font-medium">
                                 Inclusive of all taxes
@@ -271,7 +287,6 @@ const toggleWishlist = () => {
                                     <PlusIcon class="w-4 h-4" />
                                 </button>
                             </div>
-
                             <button
                                 @click="addToCart"
                                 class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
@@ -279,7 +294,6 @@ const toggleWishlist = () => {
                                 <ShoppingCartIcon class="w-5 h-5" />
                                 {{ __("Add to Cart") }}
                             </button>
-
                             <button
                                 @click="toggleWishlist"
                                 class="p-3.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl transition text-gray-400 hover:text-rose-500"
@@ -357,6 +371,128 @@ const toggleWishlist = () => {
                         </div>
                     </div>
                 </div>
+
+                <div id="reviews" class="mt-16 border-t border-white/10 pt-12">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6"
+                    >
+                        <div>
+                            <h2
+                                class="text-3xl font-black text-white tracking-tight mb-2"
+                            >
+                                Customer Reviews
+                            </h2>
+                            <div class="flex items-center gap-3">
+                                <div class="flex text-yellow-400">
+                                    <StarSolidIcon
+                                        v-for="i in 5"
+                                        :key="i"
+                                        class="w-5 h-5"
+                                        :class="
+                                            i <=
+                                            Math.round(
+                                                product.reviews_avg_rating || 0
+                                            )
+                                                ? 'fill-current'
+                                                : 'text-gray-600'
+                                        "
+                                    />
+                                </div>
+                                <span class="text-gray-300 font-bold"
+                                    >Based on
+                                    {{ product.reviews_count || 0 }}
+                                    reviews</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            v-for="review in product.reviews"
+                            :key="review.id"
+                            class="bg-white/5 border border-white/10 rounded-[2rem] p-6 backdrop-blur-md hover:bg-white/10 transition-all duration-300"
+                        >
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20"
+                                    >
+                                        {{
+                                            review.user.name
+                                                .charAt(0)
+                                                .toUpperCase()
+                                        }}
+                                    </div>
+                                    <div>
+                                        <h4
+                                            class="text-white font-bold text-sm"
+                                        >
+                                            {{ review.user.name }}
+                                        </h4>
+                                        <div
+                                            class="flex text-yellow-400 mt-0.5"
+                                        >
+                                            <StarSolidIcon
+                                                v-for="i in 5"
+                                                :key="i"
+                                                class="w-3 h-3"
+                                                :class="
+                                                    i <= review.rating
+                                                        ? 'fill-current'
+                                                        : 'text-gray-700'
+                                                "
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-1 rounded"
+                                >
+                                    {{
+                                        new Date(
+                                            review.created_at
+                                        ).toLocaleDateString("en-GB", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                        })
+                                    }}
+                                </span>
+                            </div>
+
+                            <p
+                                class="text-gray-300 text-sm leading-relaxed pl-14 italic"
+                            >
+                                "{{ review.comment }}"
+                            </p>
+
+                            <div
+                                class="mt-4 pl-14 flex items-center gap-2 text-[10px] font-bold text-green-400 uppercase tracking-widest"
+                            >
+                                <CheckBadgeIcon class="w-3 h-3" /> Verified
+                                Purchase
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="
+                                !product.reviews || product.reviews.length === 0
+                            "
+                            class="col-span-full text-center py-12 bg-white/5 rounded-3xl border border-dashed border-white/10"
+                        >
+                            <ChatBubbleLeftRightIcon
+                                class="w-12 h-12 text-gray-600 mx-auto mb-4"
+                            />
+                            <p class="text-gray-400 font-bold">
+                                No reviews yet.
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Be the first to share your experience!
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div
@@ -380,7 +516,6 @@ const toggleWishlist = () => {
 </template>
 
 <style scoped>
-/* Hide scrollbar for thumbnails */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -388,11 +523,9 @@ const toggleWishlist = () => {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-
 .animate-fade-in-up {
     animation: fadeInUp 0.3s ease-out forwards;
 }
-
 @keyframes fadeInUp {
     from {
         opacity: 0;
