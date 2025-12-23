@@ -134,4 +134,36 @@ class CheckoutController extends Controller
             'invoice_no' => $invoice_no
         ]);
     }
+
+
+    public function applyCoupon(Request $request)
+{
+    $request->validate(['code' => 'required|string']);
+
+    $cartTotal = 5000;
+
+    $coupon = PromoCode::where('code', $request->code)->first();
+
+    if (!$coupon || !$coupon->isValid()) {
+        return back()->withErrors(['code' => 'Invalid or expired promo code.']);
+    }
+
+    if ($coupon->min_order_amount && $cartTotal < $coupon->min_order_amount) {
+        return back()->withErrors(['code' => 'Minimum order amount is ৳' . $coupon->min_order_amount]);
+    }
+
+    $discount = 0;
+    if ($coupon->type === 'fixed') {
+        $discount = $coupon->value;
+    } else {
+        $discount = ($cartTotal * $coupon->value) / 100;
+    }
+
+    session()->put('coupon', [
+        'code' => $coupon->code,
+        'discount' => $discount,
+    ]);
+
+    return back()->with('success', 'Coupon applied successfully!');
+}
 }

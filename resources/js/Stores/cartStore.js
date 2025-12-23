@@ -12,7 +12,11 @@ export const useCartStore = defineStore('cart', {
 
     actions: {
         addToCart(product, quantity = 1, variant = null) {
+
+            // console.log("Adding Product:", product);
+            // console.log("Vendor ID is:", product.vendor_id);
             const cartId = variant ? `${product.id}-${variant.id}` : `${product.id}`;
+
             const existingItem = this.items.find(item => item.cartId === cartId);
 
             if (existingItem) {
@@ -22,10 +26,13 @@ export const useCartStore = defineStore('cart', {
                     cartId: cartId,
                     id: product.id,
                     name: product.name,
+                    slug: product.slug,
+                    category: product.category?.name || 'Product',
                     price: variant ? variant.price : product.base_price,
                     image: product.thumb_image,
                     variant: variant,
-                    quantity: quantity
+                    quantity: quantity,
+                    vendor_id: product.vendor_id,
                 });
             }
         },
@@ -38,5 +45,6 @@ export const useCartStore = defineStore('cart', {
             this.items = [];
         }
     },
+
     persist: true
 });

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Order;
-use App\Models\Slider; // ✅ Slider Model Import
+use App\Models\Slider;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -45,6 +45,7 @@ class HomeController extends Controller
                 ];
             });
 
+        // 2. Fetch Products
         $products = Product::with(['category.parent.parent'])
             ->where('is_active', true)
             ->where('approval_status', 'approved')
@@ -64,6 +65,7 @@ class HomeController extends Controller
                     'category' => $product->category,
                     'reviews_avg_rating' => $product->reviews_avg_rating,
                     'reviews_count' => $product->reviews_count,
+                    'vendor_id' => $product->vendor_id,
                 ];
             });
 
@@ -76,13 +78,22 @@ class HomeController extends Controller
     public function search(Request $request) {
         $query = $request->input('query');
         if (!$query) return response()->json([]);
+
         $products = Product::with('category')->where('is_active', true)
             ->where(function ($q) use ($query) {
                 $q->whereRaw("LOWER(name->>'en') LIKE ?", ['%' . strtolower($query) . '%'])
                   ->orWhereRaw("LOWER(name->>'bn') LIKE ?", ['%' . strtolower($query) . '%']);
             })->take(5)->get()->map(function ($p) {
-                return ['name' => $p->name, 'slug' => $p->slug, 'image' => $p->thumb_image, 'price' => $p->base_price, 'category' => $p->category?->name];
+                return [
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'image' => $p->thumb_image,
+                    'price' => $p->base_price,
+                    'category' => $p->category?->name,
+                    'vendor_id' => $p->vendor_id
+                ];
             });
+
         return response()->json($products);
     }
 

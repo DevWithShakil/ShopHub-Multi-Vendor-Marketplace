@@ -11,12 +11,28 @@ import {
     HomeIcon,
     ChevronDownIcon,
     CreditCardIcon,
+    TicketIcon, // Imported for discount display
 } from "@heroicons/vue/24/outline";
-import { watch, ref } from "vue";
+import { watch, ref, computed } from "vue";
 import { locations } from "@/Data/bangladesh";
 
 const cartStore = useCartStore();
 const page = usePage();
+
+// ✅ Coupon Data from Backend (Session)
+const appliedCoupon = computed(() => page.props.coupon || null);
+
+// ✅ Calculate Totals
+const shippingCost = 120;
+
+const discountAmount = computed(() => {
+    return appliedCoupon.value ? parseFloat(appliedCoupon.value.discount) : 0;
+});
+
+const grandTotal = computed(() => {
+    let total = cartStore.totalPrice + shippingCost - discountAmount.value;
+    return total > 0 ? total : 0;
+});
 
 const form = useForm({
     name: page.props.auth.user?.name || "",
@@ -25,20 +41,18 @@ const form = useForm({
     city: "",
     thana: "",
     payment_method: "cod",
-    items: [], // শুরুতে ফাঁকা রাখা ভালো, সাবমিটের সময় ভরা হবে
+    items: [],
     total_price: 0,
 });
 
 const submitOrder = () => {
-    // ✅ ১. সাবমিট করার ঠিক আগে লেটেস্ট কার্ট ডাটা ফর্ম-এ সেট করুন
+    // ✅ 1. Set Items and Calculated Total Price
     form.items = cartStore.items;
-    form.total_price = cartStore.totalPrice + 120; // Delivery Charge
+    form.total_price = grandTotal.value; // Use the discounted total
 
     form.post(route("checkout.store"), {
         onSuccess: () => {
-            // ✅ ২. শুধুমাত্র COD হলে কার্ট ক্লিয়ার করবেন।
-            // SSLCommerz হলে পেজ রিডাইরেক্ট হয়ে চলে যাবে, তাই এখানে ক্লিয়ার করার দরকার নেই
-            // (ফেইল হলে ইউজার আবার কার্ট দেখতে পাবে)
+            // ✅ 2. Clear cart only for COD (SSLCommerz redirects)
             if (form.payment_method === "cod") {
                 cartStore.clearCart();
             }
@@ -105,6 +119,12 @@ watch(
                         <Link href="/" class="hover:text-white transition"
                             ><HomeIcon class="w-4 h-4"
                         /></Link>
+                        <span>/</span>
+                        <Link
+                            href="/cart"
+                            class="hover:text-white transition"
+                            >{{ __("Cart") }}</Link
+                        >
                         <span>/</span>
                         <span class="text-white font-bold">{{
                             __("Checkout")
@@ -418,8 +438,8 @@ watch(
                                 class="space-y-3 py-6 border-t border-b border-white/10 text-sm"
                             >
                                 <div class="flex justify-between text-gray-400">
-                                    <span>{{ __("Subtotal") }}</span
-                                    ><span class="font-bold text-white"
+                                    <span>{{ __("Subtotal") }}</span>
+                                    <span class="font-bold text-white"
                                         >৳{{ cartStore.totalPrice }}</span
                                     >
                                 </div>
@@ -427,8 +447,24 @@ watch(
                                     <span class="flex items-center gap-1"
                                         ><TruckIcon class="w-4 h-4" />
                                         {{ __("Delivery Charge") }}</span
-                                    ><span class="font-bold text-white"
-                                        >৳120</span
+                                    >
+                                    <span class="font-bold text-white"
+                                        >৳{{ shippingCost }}</span
+                                    >
+                                </div>
+
+                                <div
+                                    v-if="appliedCoupon"
+                                    class="flex justify-between text-green-400 animate-pulse"
+                                >
+                                    <span class="flex items-center gap-1"
+                                        ><TicketIcon class="w-4 h-4" />
+                                        {{ __("Discount") }} ({{
+                                            appliedCoupon.code
+                                        }})</span
+                                    >
+                                    <span class="font-bold"
+                                        >-৳{{ discountAmount }}</span
                                     >
                                 </div>
                             </div>
@@ -439,7 +475,7 @@ watch(
                                 }}</span>
                                 <span
                                     class="text-2xl font-black text-indigo-400"
-                                    >৳{{ cartStore.totalPrice + 120 }}</span
+                                    >৳{{ grandTotal }}</span
                                 >
                             </div>
 
@@ -493,8 +529,6 @@ watch(
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
-
-/* Force dark styling on option elements */
 option {
     background-color: #0b0f19;
     color: #e5e7eb;

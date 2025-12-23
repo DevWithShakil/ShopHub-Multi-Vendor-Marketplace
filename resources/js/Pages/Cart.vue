@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Head, Link, usePage, useForm } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import { useCartStore } from "@/Stores/cartStore";
 import {
@@ -12,10 +12,57 @@ import {
     LockClosedIcon,
     TicketIcon,
     HomeIcon,
+    XMarkIcon,
+    CheckCircleIcon,
+    ExclamationCircleIcon,
 } from "@heroicons/vue/24/outline";
+import { computed } from "vue";
 
 const cartStore = useCartStore();
 const page = usePage();
+
+// --- 🏷️ Coupon Logic ---
+const couponForm = useForm({
+    code: "",
+    subtotal: 0, // Will be populated on submit
+});
+
+// Get coupon from backend (via HandleInertiaRequests middleware)
+const appliedCoupon = computed(() => page.props.coupon);
+const successMessage = computed(() => page.props.flash?.success || null);
+
+const applyCoupon = () => {
+    couponForm
+        .transform((data) => ({
+            ...data,
+            cart_items: cartStore.items.map((item) => ({
+                product_id: item.id,
+                vendor_id: item.vendor_id,
+                price: item.price,
+                quantity: item.quantity,
+            })),
+        }))
+        .post(route("coupon.apply"), {
+            preserveScroll: true,
+            onSuccess: () => couponForm.reset(),
+        });
+};
+
+const removeCoupon = () => {
+    couponForm.delete(route("coupon.remove"), {
+        preserveScroll: true,
+    });
+};
+
+// Calculate Grand Total
+const shippingCost = 120;
+const grandTotal = computed(() => {
+    let total = cartStore.totalPrice + shippingCost;
+    if (appliedCoupon.value) {
+        total -= parseFloat(appliedCoupon.value.discount);
+    }
+    return total > 0 ? total : 0;
+});
 
 // ✅ JSON Name Helper
 const getLocalizedName = (name) => {
@@ -100,7 +147,7 @@ const getLocalizedName = (name) => {
                     <p class="text-gray-400 mb-8 max-w-md">
                         {{
                             __(
-                                "Looks like you haven't added anything to your cart yet. Explore our products and find something you love."
+                                "Looks like you haven't added anything to your cart yet."
                             )
                         }}
                     </p>
@@ -160,7 +207,6 @@ const getLocalizedName = (name) => {
                                                 }}
                                             </h3>
                                         </Link>
-
                                         <div
                                             v-if="item.variant"
                                             class="flex flex-wrap justify-center sm:justify-start gap-2"
@@ -179,7 +225,6 @@ const getLocalizedName = (name) => {
                                             </span>
                                         </div>
                                     </div>
-
                                     <p class="text-2xl font-black text-white">
                                         ৳{{ item.price * item.quantity }}
                                     </p>
@@ -214,7 +259,6 @@ const getLocalizedName = (name) => {
                                             <PlusIcon class="w-4 h-4" />
                                         </button>
                                     </div>
-
                                     <button
                                         @click="
                                             cartStore.removeFromCart(
@@ -229,14 +273,6 @@ const getLocalizedName = (name) => {
                                 </div>
                             </div>
                         </div>
-
-                        <Link
-                            href="/"
-                            class="md:hidden flex justify-center items-center gap-2 text-sm font-bold text-indigo-400 hover:text-white py-4"
-                        >
-                            <ArrowLeftIcon class="w-4 h-4" />
-                            {{ __("Continue Shopping") }}
-                        </Link>
                     </div>
 
                     <div class="lg:w-96 xl:w-[420px] flex-shrink-0">
@@ -250,19 +286,99 @@ const getLocalizedName = (name) => {
                                 {{ __("Order Summary") }}
                             </h3>
 
-                            <div class="flex gap-2 mb-6">
-                                <div class="relative flex-1">
-                                    <input
-                                        type="text"
-                                        :placeholder="__('Promo Code')"
-                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
-                                    />
-                                </div>
-                                <button
-                                    class="bg-white text-gray-900 px-5 rounded-xl text-sm font-bold hover:bg-indigo-500 hover:text-white transition"
+                            <div class="mb-6">
+                                <div
+                                    v-if="appliedCoupon"
+                                    class="bg-green-500/10 border border-green-500/20 rounded-xl p-3 mb-2 animate-fade-in-up"
                                 >
-                                    {{ __("Apply") }}
-                                </button>
+                                    <div
+                                        class="flex justify-between items-center mb-1"
+                                    >
+                                        <span
+                                            class="text-xs text-green-400 font-bold flex items-center gap-1"
+                                        >
+                                            <CheckCircleIcon class="w-4 h-4" />
+                                            COUPON APPLIED
+                                        </span>
+                                        <button
+                                            @click="removeCoupon"
+                                            class="p-1 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition"
+                                            title="Remove Coupon"
+                                            :disabled="couponForm.processing"
+                                        >
+                                            <XMarkIcon class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div
+                                        class="flex justify-between items-center text-sm"
+                                    >
+                                        <span
+                                            class="text-white font-mono font-bold tracking-wider"
+                                            >{{ appliedCoupon.code }}</span
+                                        >
+                                        <span class="text-green-400 font-bold"
+                                            >-৳{{
+                                                appliedCoupon.discount
+                                            }}</span
+                                        >
+                                    </div>
+                                </div>
+
+                                <div v-else>
+                                    <div class="flex gap-2">
+                                        <div class="relative flex-1">
+                                            <input
+                                                v-model="couponForm.code"
+                                                type="text"
+                                                :placeholder="__('Promo Code')"
+                                                class="w-full bg-black/30 border rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 transition outline-none placeholder-gray-600 uppercase"
+                                                :class="
+                                                    couponForm.errors.code
+                                                        ? 'border-rose-500/50 focus:border-rose-500'
+                                                        : 'border-white/10 focus:border-indigo-500'
+                                                "
+                                                @keydown.enter.prevent="
+                                                    applyCoupon
+                                                "
+                                            />
+                                        </div>
+                                        <button
+                                            @click="applyCoupon"
+                                            :disabled="
+                                                couponForm.processing ||
+                                                !couponForm.code
+                                            "
+                                            class="bg-white text-gray-900 px-5 rounded-xl text-sm font-bold hover:bg-indigo-500 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[80px]"
+                                        >
+                                            <span
+                                                v-if="couponForm.processing"
+                                                class="animate-pulse"
+                                                >...</span
+                                            >
+                                            <span v-else>{{
+                                                __("Apply")
+                                            }}</span>
+                                        </button>
+                                    </div>
+
+                                    <p
+                                        v-if="couponForm.errors.code"
+                                        class="text-rose-400 text-xs mt-2 flex items-center gap-1 animate-pulse"
+                                    >
+                                        <ExclamationCircleIcon
+                                            class="w-3 h-3"
+                                        />
+                                        {{ couponForm.errors.code }}
+                                    </p>
+
+                                    <p
+                                        v-if="successMessage && !appliedCoupon"
+                                        class="text-green-400 text-xs mt-2 flex items-center gap-1"
+                                    >
+                                        <CheckCircleIcon class="w-3 h-3" />
+                                        {{ successMessage }}
+                                    </p>
+                                </div>
                             </div>
 
                             <div
@@ -277,14 +393,18 @@ const getLocalizedName = (name) => {
                                 <div class="flex justify-between">
                                     <span>{{ __("Shipping Estimate") }}</span>
                                     <span class="font-bold text-white"
-                                        >৳120</span
+                                        >৳{{ shippingCost }}</span
                                     >
                                 </div>
+
                                 <div
-                                    class="flex justify-between text-green-400"
+                                    v-if="appliedCoupon"
+                                    class="flex justify-between text-green-400 animate-pulse"
                                 >
                                     <span>{{ __("Discount") }}</span>
-                                    <span class="font-bold">-৳0</span>
+                                    <span class="font-bold"
+                                        >-৳{{ appliedCoupon.discount }}</span
+                                    >
                                 </div>
                             </div>
 
@@ -293,7 +413,7 @@ const getLocalizedName = (name) => {
                                     __("Total Amount")
                                 }}</span>
                                 <span class="text-3xl font-black text-white"
-                                    >৳{{ cartStore.totalPrice + 120 }}</span
+                                    >৳{{ grandTotal }}</span
                                 >
                             </div>
 
@@ -341,3 +461,19 @@ const getLocalizedName = (name) => {
         </div>
     </MainLayout>
 </template>
+
+<style scoped>
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>

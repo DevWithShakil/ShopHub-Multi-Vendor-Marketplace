@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\CartController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -78,6 +79,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/orders/{invoice_no}', [DashboardController::class, 'orderDetails'])->name('dashboard.order.details');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::get('/invoice/{id}', [InvoiceController::class, 'download'])->name('invoice.download');
+    Route::post('/coupon/apply', [CartController::class, 'applyCoupon'])->name('coupon.apply');
+    Route::delete('/coupon/remove', [CartController::class, 'removeCoupon'])->name('coupon.remove');
 
 });
 

@@ -27,24 +27,37 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
-public function share(Request $request): array
-{
-    $locale = app()->getLocale();
-    $path = base_path('lang/' . $locale . '.json');
+    public function share(Request $request): array
+    {
+        // লোকালাইজেশন / ট্রান্সলেশন লোড করা
+        $locale = app()->getLocale();
+        $path = base_path('lang/' . $locale . '.json');
 
-    $translations = file_exists($path)
-        ? json_decode(file_get_contents($path), true)
-        : [];
+        $translations = file_exists($path)
+            ? json_decode(file_get_contents($path), true)
+            : [];
 
-    return [
-        ...parent::share($request),
-        'auth' => [
-            'user' => $request->user(),
-            'wishlist_ids' => $request->user() ? $request->user()->wishlist()->pluck('product_id') : [],
+        return [
+            ...parent::share($request),
 
-        ],
-        'locale' => $locale,
-        'translations' => $translations,
-    ];
-}
+            // ১. অথেনটিফিকেশন এবং ইউজার ডাটা
+            'auth' => [
+                'user' => $request->user(),
+                'wishlist_ids' => $request->user() ? $request->user()->wishlist()->pluck('product_id') : [],
+            ],
+
+            // ২. কুপন ডাটা (Auth এর বাইরে, গ্লোবাল প্রপস হিসেবে)
+            'coupon' => fn () => $request->session()->get('coupon'),
+
+            // ৩. ফ্ল্যাশ মেসেজ (Success/Error টোস্ট দেখানোর জন্য)
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+
+            // ৪. লোকালাইজেশন ডাটা
+            'locale' => $locale,
+            'translations' => $translations,
+        ];
+    }
 }

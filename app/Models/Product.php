@@ -10,16 +10,41 @@ class Product extends Model
 {
     use HasFactory, HasTranslations;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'vendor_id',
+        'category_id',
+        'brand_id',
+        'name',
+        'slug',
+        'short_description',
+        'description',
+        'base_price',
+        'discount_price',
+        'stock_qty',
+        'thumb_image',
+        'gallery_images',
+        'is_active',
+        'is_featured',
+        'has_variants',
+        'approval_status',
+    ];
 
-    public $translatable = ['name', 'description'];
+    // Spatie Translatable Fields
+    public $translatable = ['name', 'description', 'short_description'];
 
     protected $casts = [
         'gallery_images' => 'array',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'has_variants' => 'boolean',
+        'base_price' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'vendor_id' => 'integer',
     ];
+
+    // ==========================================
+    // 🔗 Relationships
+    // ==========================================
 
     public function vendor()
     {

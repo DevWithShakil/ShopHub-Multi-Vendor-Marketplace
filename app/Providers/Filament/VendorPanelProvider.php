@@ -8,6 +8,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Vendor\Widgets\VendorStatsOverview;
 use App\Filament\Vendor\Widgets\VendorSalesChart;
+use App\Filament\Resources\PromoCodeResource; //
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -23,38 +24,42 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 class VendorPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
-{
-    return $panel
-        ->id('vendor')
-        ->path('vendor')
-        ->login()
-        ->colors([
-            'primary' => \Filament\Support\Colors\Color::Purple,
-        ])
-        ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
-        ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
-        ->pages([
-            Pages\Dashboard::class,
-        ])
-        ->discoverWidgets(in: app_path('Filament/Vendor/Widgets'), for: 'App\\Filament\\Vendor\\Widgets')
-        ->widgets([
-            Widgets\AccountWidget::class,
-            VendorStatsOverview::class,
-            VendorSalesChart::class,
-        ])
-        ->middleware([
-            EncryptCookies::class,
-            AddQueuedCookiesToResponse::class,
-            StartSession::class,
-            AuthenticateSession::class,
-            ShareErrorsFromSession::class,
-            VerifyCsrfToken::class,
-            SubstituteBindings::class,
-            DisableBladeIconComponents::class,
-            DispatchServingFilamentEvent::class,
-        ])
-        ->authMiddleware([
-            Authenticate::class,
-        ]);
-}
+    {
+        return $panel
+            ->id('vendor')
+            ->path('vendor')
+            ->login()
+            ->colors([
+                'primary' => \Filament\Support\Colors\Color::Purple,
+            ])
+            ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
+            ->resources([
+                PromoCodeResource::class,
+            ])
+
+            ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
+            ->pages([
+                Pages\Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Vendor/Widgets'), for: 'App\\Filament\\Vendor\\Widgets')
+            ->widgets([
+                Widgets\AccountWidget::class,
+                VendorStatsOverview::class,
+                VendorSalesChart::class,
+            ])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ]);
+    }
 }
