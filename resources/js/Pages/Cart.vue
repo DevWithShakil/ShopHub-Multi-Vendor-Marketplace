@@ -21,20 +21,18 @@ import { computed } from "vue";
 const cartStore = useCartStore();
 const page = usePage();
 
-// --- 🏷️ Coupon Logic ---
 const couponForm = useForm({
     code: "",
-    subtotal: 0, // Will be populated on submit
 });
 
-// Get coupon from backend (via HandleInertiaRequests middleware)
-const appliedCoupon = computed(() => page.props.coupon);
+const appliedCoupon = computed(() => page.props.coupon || null);
 const successMessage = computed(() => page.props.flash?.success || null);
 
 const applyCoupon = () => {
     couponForm
         .transform((data) => ({
             ...data,
+            subtotal: cartStore.totalPrice,
             cart_items: cartStore.items.map((item) => ({
                 product_id: item.id,
                 vendor_id: item.vendor_id,
@@ -49,12 +47,9 @@ const applyCoupon = () => {
 };
 
 const removeCoupon = () => {
-    couponForm.delete(route("coupon.remove"), {
-        preserveScroll: true,
-    });
+    couponForm.delete(route("coupon.remove"), { preserveScroll: true });
 };
 
-// Calculate Grand Total
 const shippingCost = 120;
 const grandTotal = computed(() => {
     let total = cartStore.totalPrice + shippingCost;
@@ -180,7 +175,6 @@ const getLocalizedName = (name) => {
                                     :alt="getLocalizedName(item.name)"
                                 />
                             </div>
-
                             <div class="flex-1 w-full text-center sm:text-left">
                                 <div
                                     class="flex flex-col sm:flex-row justify-between items-start gap-4"
@@ -189,7 +183,11 @@ const getLocalizedName = (name) => {
                                         <p
                                             class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-1"
                                         >
-                                            {{ item.category || "Product" }}
+                                            {{
+                                                getLocalizedName(
+                                                    item.category
+                                                ) || "Product"
+                                            }}
                                         </p>
                                         <Link
                                             :href="
@@ -229,7 +227,6 @@ const getLocalizedName = (name) => {
                                         ৳{{ item.price * item.quantity }}
                                     </p>
                                 </div>
-
                                 <div
                                     class="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-white/10 gap-4"
                                 >
@@ -303,20 +300,36 @@ const getLocalizedName = (name) => {
                                         <button
                                             @click="removeCoupon"
                                             class="p-1 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition"
-                                            title="Remove Coupon"
+                                            title="Remove"
                                             :disabled="couponForm.processing"
                                         >
                                             <XMarkIcon class="w-4 h-4" />
                                         </button>
                                     </div>
                                     <div
-                                        class="flex justify-between items-center text-sm"
+                                        class="flex justify-between items-center"
                                     >
+                                        <div class="flex flex-col">
+                                            <span
+                                                class="text-white font-mono font-bold tracking-wider"
+                                                >{{ appliedCoupon.code }}</span
+                                            >
+                                            <span
+                                                v-if="
+                                                    appliedCoupon.type ===
+                                                    'percentage'
+                                                "
+                                                class="text-[10px] text-green-300 font-bold bg-green-500/20 px-1.5 py-0.5 rounded w-fit mt-1"
+                                            >
+                                                {{
+                                                    parseInt(
+                                                        appliedCoupon.value
+                                                    )
+                                                }}% OFF
+                                            </span>
+                                        </div>
                                         <span
-                                            class="text-white font-mono font-bold tracking-wider"
-                                            >{{ appliedCoupon.code }}</span
-                                        >
-                                        <span class="text-green-400 font-bold"
+                                            class="text-green-400 font-bold text-lg"
                                             >-৳{{
                                                 appliedCoupon.discount
                                             }}</span
@@ -326,22 +339,18 @@ const getLocalizedName = (name) => {
 
                                 <div v-else>
                                     <div class="flex gap-2">
-                                        <div class="relative flex-1">
-                                            <input
-                                                v-model="couponForm.code"
-                                                type="text"
-                                                :placeholder="__('Promo Code')"
-                                                class="w-full bg-black/30 border rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 transition outline-none placeholder-gray-600 uppercase"
-                                                :class="
-                                                    couponForm.errors.code
-                                                        ? 'border-rose-500/50 focus:border-rose-500'
-                                                        : 'border-white/10 focus:border-indigo-500'
-                                                "
-                                                @keydown.enter.prevent="
-                                                    applyCoupon
-                                                "
-                                            />
-                                        </div>
+                                        <input
+                                            v-model="couponForm.code"
+                                            type="text"
+                                            :placeholder="__('Promo Code')"
+                                            class="w-full bg-black/30 border rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 transition outline-none placeholder-gray-600 uppercase"
+                                            :class="
+                                                couponForm.errors.code
+                                                    ? 'border-rose-500/50 focus:border-rose-500'
+                                                    : 'border-white/10 focus:border-indigo-500'
+                                            "
+                                            @keydown.enter.prevent="applyCoupon"
+                                        />
                                         <button
                                             @click="applyCoupon"
                                             :disabled="
@@ -360,7 +369,6 @@ const getLocalizedName = (name) => {
                                             }}</span>
                                         </button>
                                     </div>
-
                                     <p
                                         v-if="couponForm.errors.code"
                                         class="text-rose-400 text-xs mt-2 flex items-center gap-1 animate-pulse"
@@ -370,7 +378,6 @@ const getLocalizedName = (name) => {
                                         />
                                         {{ couponForm.errors.code }}
                                     </p>
-
                                     <p
                                         v-if="successMessage && !appliedCoupon"
                                         class="text-green-400 text-xs mt-2 flex items-center gap-1"
@@ -396,7 +403,6 @@ const getLocalizedName = (name) => {
                                         >৳{{ shippingCost }}</span
                                     >
                                 </div>
-
                                 <div
                                     v-if="appliedCoupon"
                                     class="flex justify-between text-green-400 animate-pulse"
@@ -431,8 +437,8 @@ const getLocalizedName = (name) => {
                                 <div
                                     class="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20"
                                 >
-                                    <ShieldCheckIcon class="w-4 h-4" />
-                                    100% {{ __("Secure Payment") }}
+                                    <ShieldCheckIcon class="w-4 h-4" /> 100%
+                                    {{ __("Secure Payment") }}
                                 </div>
                                 <div
                                     class="flex gap-3 opacity-60 grayscale hover:grayscale-0 transition-all duration-300"
