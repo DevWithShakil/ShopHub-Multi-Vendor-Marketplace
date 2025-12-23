@@ -1,7 +1,12 @@
 <script setup>
 import { Head, Link } from "@inertiajs/vue3";
 import UserDashboardLayout from "@/Layouts/UserDashboardLayout.vue";
-import { ShoppingBagIcon, EyeIcon, HomeIcon } from "@heroicons/vue/24/outline";
+import {
+    ShoppingBagIcon,
+    EyeIcon,
+    HomeIcon,
+    ArrowDownTrayIcon, // ✅ আইকন ইমপোর্ট করা হলো
+} from "@heroicons/vue/24/outline";
 
 defineProps({
     orders: Object, // Pagination Object
@@ -81,6 +86,7 @@ defineProps({
                                             #{{ order.invoice_no }}
                                         </span>
                                     </td>
+
                                     <td
                                         class="p-6 text-sm text-gray-300 font-medium"
                                     >
@@ -90,14 +96,17 @@ defineProps({
                                             ).toLocaleDateString()
                                         }}
                                     </td>
+
                                     <td class="p-6 text-sm text-gray-400">
                                         {{ order.items_count }} Items
                                     </td>
+
                                     <td
                                         class="p-6 font-bold text-white text-lg"
                                     >
                                         ৳{{ order.total_amount }}
                                     </td>
+
                                     <td class="p-6">
                                         <span
                                             class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm flex w-fit items-center gap-1.5"
@@ -144,18 +153,39 @@ defineProps({
                                             {{ order.status }}
                                         </span>
                                     </td>
+
                                     <td class="p-6 text-right">
-                                        <Link
-                                            :href="
-                                                route(
-                                                    'dashboard.order.details',
-                                                    order.invoice_no
-                                                )
-                                            "
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
+                                        <div
+                                            class="flex items-center justify-end gap-2"
                                         >
-                                            <EyeIcon class="w-4 h-4" /> View
-                                        </Link>
+                                            <Link
+                                                :href="
+                                                    route(
+                                                        'dashboard.order.details',
+                                                        order.invoice_no
+                                                    )
+                                                "
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
+                                            >
+                                                <EyeIcon class="w-4 h-4" /> View
+                                            </Link>
+
+                                            <a
+                                                :href="
+                                                    route(
+                                                        'invoice.download',
+                                                        order.id
+                                                    )
+                                                "
+                                                target="_blank"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-lg transition shadow-lg"
+                                            >
+                                                <ArrowDownTrayIcon
+                                                    class="w-4 h-4"
+                                                />
+                                                Invoice
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
 
