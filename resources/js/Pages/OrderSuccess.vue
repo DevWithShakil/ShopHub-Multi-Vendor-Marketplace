@@ -193,7 +193,10 @@ const copyOrderNo = () => {
 
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href="/dashboard/orders"
+                            :href="route('track.order')"
+                            :data="{ invoice_no: invoice_no }"
+                            method="post"
+                            as="button"
                             class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-transform active:scale-95 group"
                         >
                             Track Order

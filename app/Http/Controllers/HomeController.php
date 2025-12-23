@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -75,4 +76,25 @@ class HomeController extends Controller
 
         return response()->json($products);
     }
+
+    public function trackOrder(Request $request)
+{
+    $order = null;
+    if ($request->isMethod('post')) {
+        $request->validate([
+            'invoice_no' => 'required|string|exists:orders,invoice_no',
+        ], [
+            'invoice_no.exists' => 'No order found with this Invoice ID.',
+        ]);
+
+        $order = Order::with(['items.product'])
+            ->where('invoice_no', $request->invoice_no)
+            ->first();
+    }
+
+    return Inertia::render('TrackOrder', [
+        'order' => $order,
+        'filters' => $request->only('invoice_no'),
+    ]);
+}
 }

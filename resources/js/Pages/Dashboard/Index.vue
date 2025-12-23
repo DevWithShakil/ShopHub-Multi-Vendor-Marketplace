@@ -7,8 +7,8 @@ import {
     CheckBadgeIcon,
     BanknotesIcon,
     ArrowRightIcon,
-    HeartIcon,
     HomeIcon,
+    TruckIcon,
 } from "@heroicons/vue/24/outline";
 
 defineProps({
@@ -33,7 +33,7 @@ defineProps({
 
             <div class="relative z-10 max-w-7xl mx-auto">
                 <div
-                    class="mb-10 animate-fade-in-up flex justify-between items-end"
+                    class="mb-10 animate-fade-in-up flex flex-col md:flex-row justify-between items-start md:items-end gap-4"
                 >
                     <div>
                         <h1
@@ -58,7 +58,7 @@ defineProps({
                 </div>
 
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
                 >
                     <div
                         class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 hover:border-indigo-500/50 transition-all duration-300 group hover:-translate-y-1"
@@ -66,7 +66,7 @@ defineProps({
                         <div class="flex justify-between items-start">
                             <div>
                                 <p
-                                    class="text-sm font-bold text-gray-400 uppercase tracking-wider"
+                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider"
                                 >
                                     {{ __("Total Orders") }}
                                 </p>
@@ -90,7 +90,7 @@ defineProps({
                         <div class="flex justify-between items-start">
                             <div>
                                 <p
-                                    class="text-sm font-bold text-gray-400 uppercase tracking-wider"
+                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider"
                                 >
                                     {{ __("Pending") }}
                                 </p>
@@ -114,7 +114,7 @@ defineProps({
                         <div class="flex justify-between items-start">
                             <div>
                                 <p
-                                    class="text-sm font-bold text-gray-400 uppercase tracking-wider"
+                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider"
                                 >
                                     {{ __("Completed") }}
                                 </p>
@@ -133,36 +133,12 @@ defineProps({
                     </div>
 
                     <div
-                        class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 hover:border-rose-500/50 transition-all duration-300 group hover:-translate-y-1"
+                        class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 hover:border-purple-500/50 transition-all duration-300 group hover:-translate-y-1"
                     >
                         <div class="flex justify-between items-start">
                             <div>
                                 <p
-                                    class="text-sm font-bold text-gray-400 uppercase tracking-wider"
-                                >
-                                    {{ __("Wishlist") }}
-                                </p>
-                                <h3
-                                    class="text-3xl font-black text-white mt-2 group-hover:text-rose-400 transition-colors"
-                                >
-                                    {{ stats.wishlist_count }}
-                                </h3>
-                            </div>
-                            <div
-                                class="p-3 bg-gradient-to-br from-rose-500 to-pink-600 text-white rounded-2xl shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform"
-                            >
-                                <HeartIcon class="w-6 h-6" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 hover:border-purple-500/50 transition-all duration-300 group hover:-translate-y-1 sm:col-span-2 lg:col-span-1"
-                    >
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p
-                                    class="text-sm font-bold text-gray-400 uppercase tracking-wider"
+                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider"
                                 >
                                     {{ __("Total Spend") }}
                                 </p>
@@ -226,6 +202,11 @@ defineProps({
                                     >
                                         Amount
                                     </th>
+                                    <th
+                                        class="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider text-right"
+                                    >
+                                        Action
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5">
@@ -237,9 +218,8 @@ defineProps({
                                     <td class="p-5">
                                         <span
                                             class="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
+                                            >#{{ order.invoice_no }}</span
                                         >
-                                            #{{ order.invoice_no }}
-                                        </span>
                                     </td>
                                     <td
                                         class="p-5 text-sm text-gray-300 font-medium"
@@ -261,7 +241,9 @@ defineProps({
                                                     'processing',
                                                 'bg-green-500/10 text-green-400 border-green-500/20':
                                                     order.status ===
-                                                    'completed',
+                                                        'completed' ||
+                                                    order.status ===
+                                                        'delivered',
                                                 'bg-rose-500/10 text-rose-400 border-rose-500/20':
                                                     order.status ===
                                                     'cancelled',
@@ -278,7 +260,9 @@ defineProps({
                                                         'processing',
                                                     'bg-green-400':
                                                         order.status ===
-                                                        'completed',
+                                                            'completed' ||
+                                                        order.status ===
+                                                            'delivered',
                                                     'bg-rose-400':
                                                         order.status ===
                                                         'cancelled',
@@ -292,10 +276,23 @@ defineProps({
                                     >
                                         ৳{{ order.total_amount }}
                                     </td>
+                                    <td class="p-5 text-right">
+                                        <Link
+                                            :href="route('track.order')"
+                                            :data="{
+                                                invoice_no: order.invoice_no,
+                                            }"
+                                            method="post"
+                                            as="button"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-indigo-600 hover:text-white border border-white/10 hover:border-indigo-600 rounded-lg text-xs font-bold text-gray-300 transition-all shadow-lg active:scale-95"
+                                            title="Track Order Status"
+                                        >
+                                            <TruckIcon class="w-4 h-4" /> Track
+                                        </Link>
+                                    </td>
                                 </tr>
-
                                 <tr v-if="recent_orders.length === 0">
-                                    <td colspan="4" class="p-16 text-center">
+                                    <td colspan="5" class="p-16 text-center">
                                         <div class="flex flex-col items-center">
                                             <div
                                                 class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4"

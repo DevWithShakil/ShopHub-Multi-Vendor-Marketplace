@@ -13,11 +13,12 @@ import {
     ArrowRightOnRectangleIcon,
     Squares2X2Icon,
     LanguageIcon,
+    TruckIcon, // ✅ New Import
 } from "@heroicons/vue/24/outline";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
 import axios from "axios";
-import debounce from "lodash/debounce"; // নিশ্চিত করুন lodash ইনস্টল আছে
+import debounce from "lodash/debounce";
 
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
@@ -39,7 +40,6 @@ const searchResults = ref([]);
 const isSearching = ref(false);
 const showDropdown = ref(false);
 
-// Helper to fix JSON Name issue
 const getLocalizedName = (nameField) => {
     try {
         const locale = page.props.locale || "en";
@@ -56,7 +56,6 @@ const getLocalizedName = (nameField) => {
     }
 };
 
-// Debounced Search Function
 const performSearch = debounce(async (query) => {
     if (query.length < 2) {
         searchResults.value = [];
@@ -77,7 +76,6 @@ const performSearch = debounce(async (query) => {
     }
 }, 300);
 
-// Watcher
 watch(searchQuery, (newVal) => {
     if (!newVal) {
         searchResults.value = [];
@@ -136,7 +134,6 @@ const closeSearch = () => {
                                 :placeholder="__('Search for products...')"
                                 class="w-full bg-black/20 border border-white/10 rounded-full py-3 pl-5 pr-14 text-sm text-white placeholder-gray-500 focus:bg-black/40 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-inner"
                             />
-
                             <div class="absolute right-1.5 top-1.5">
                                 <div v-if="isSearching" class="p-2">
                                     <svg
@@ -214,7 +211,6 @@ const closeSearch = () => {
                                                     class="w-6 h-6 text-gray-400"
                                                 />
                                             </div>
-
                                             <div class="flex-1 min-w-0">
                                                 <h4
                                                     class="text-sm font-bold text-gray-200 group-hover:text-indigo-400 truncate transition-colors"
@@ -235,7 +231,6 @@ const closeSearch = () => {
                                                     }}
                                                 </p>
                                             </div>
-
                                             <div
                                                 class="text-sm font-bold text-white"
                                             >
@@ -255,7 +250,6 @@ const closeSearch = () => {
                                     View all results for "{{ searchQuery }}"
                                 </Link>
                             </div>
-
                             <div
                                 v-else-if="
                                     !isSearching && searchQuery.length > 1
@@ -307,6 +301,21 @@ const closeSearch = () => {
                         >
                             <Bars3Icon class="w-7 h-7" />
                         </button>
+
+                        <Link
+                            :href="route('track.order')"
+                            class="hidden md:flex flex-col items-center text-gray-400 hover:text-indigo-400 transition-colors duration-300 group relative mr-2"
+                            title="Track Order"
+                        >
+                            <div class="relative p-1">
+                                <TruckIcon
+                                    class="w-7 h-7 group-hover:scale-110 transition-transform duration-300"
+                                />
+                                <span
+                                    class="absolute top-0 right-0 w-2 h-2 bg-indigo-500 rounded-full animate-pulse border border-[#0B0F19]"
+                                ></span>
+                            </div>
+                        </Link>
 
                         <Link
                             :href="route('wishlist.index')"
@@ -496,6 +505,7 @@ const closeSearch = () => {
                             </p>
                         </div>
                     </div>
+
                     <div>
                         <h4
                             class="text-white font-bold text-lg mb-6 flex items-center gap-2"
@@ -529,6 +539,7 @@ const closeSearch = () => {
                             </li>
                         </ul>
                     </div>
+
                     <div>
                         <h4
                             class="text-white font-bold text-lg mb-6 flex items-center gap-2"
@@ -541,8 +552,8 @@ const closeSearch = () => {
                         <ul class="space-y-4 text-sm text-gray-400">
                             <li>
                                 <Link
-                                    href="/dashboard/orders"
-                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block"
+                                    :href="route('track.order')"
+                                    class="hover:text-indigo-400 hover:translate-x-1 transition-transform inline-block font-bold text-white"
                                     >Track Order</Link
                                 >
                             </li>
@@ -562,6 +573,7 @@ const closeSearch = () => {
                             </li>
                         </ul>
                     </div>
+
                     <div
                         class="bg-white/5 p-6 rounded-2xl border border-white/5 backdrop-blur-sm"
                     >
@@ -591,6 +603,7 @@ const closeSearch = () => {
                         </form>
                     </div>
                 </div>
+
                 <div
                     class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4"
                 >
@@ -619,12 +632,94 @@ const closeSearch = () => {
                 </div>
             </div>
         </footer>
+
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex">
+            <div
+                class="fixed inset-0 bg-black/80 backdrop-blur-sm"
+                @click="isMobileMenuOpen = false"
+            ></div>
+            <div
+                class="relative w-64 bg-[#151925] h-full shadow-2xl p-6 flex flex-col gap-6 animate-fade-in-right border-r border-white/10"
+            >
+                <button
+                    @click="isMobileMenuOpen = false"
+                    class="absolute top-4 right-4 p-2 text-gray-400 hover:text-white"
+                >
+                    <XMarkIcon class="w-6 h-6" />
+                </button>
+
+                <div class="mt-8 space-y-4">
+                    <Link
+                        href="/"
+                        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors"
+                    >
+                        <HomeIcon class="w-6 h-6 text-indigo-400" />
+                        <span class="font-bold">Home</span>
+                    </Link>
+                    <Link
+                        :href="route('wishlist.index')"
+                        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors"
+                    >
+                        <HeartIcon class="w-6 h-6 text-rose-500" />
+                        <span class="font-bold">Wishlist</span>
+                        <span
+                            v-if="wishlistStore.count > 0"
+                            class="ml-auto bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full"
+                            >{{ wishlistStore.count }}</span
+                        >
+                    </Link>
+                    <Link
+                        :href="route('track.order')"
+                        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors"
+                    >
+                        <TruckIcon class="w-6 h-6 text-indigo-400" />
+                        <span class="font-bold">Track Order</span>
+                    </Link>
+
+                    <div class="border-t border-white/10 my-2"></div>
+
+                    <div v-if="user" class="space-y-4">
+                        <Link
+                            href="/dashboard"
+                            class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors"
+                        >
+                            <Squares2X2Icon class="w-6 h-6 text-gray-400" />
+                            <span class="font-bold">Dashboard</span>
+                        </Link>
+                        <Link
+                            href="/logout"
+                            method="post"
+                            as="button"
+                            class="flex w-full items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"
+                        >
+                            <ArrowRightOnRectangleIcon class="w-6 h-6" />
+                            <span class="font-bold">Logout</span>
+                        </Link>
+                    </div>
+                    <div v-else class="space-y-3 px-4">
+                        <Link
+                            href="/login"
+                            class="block w-full text-center bg-white/5 border border-white/10 text-white py-3 rounded-xl font-bold"
+                            >Login</Link
+                        >
+                        <Link
+                            href="/register"
+                            class="block w-full text-center bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-900/50"
+                            >Register</Link
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
 .animate-fade-in-up {
     animation: fadeInUp 0.2s ease-out forwards;
+}
+.animate-fade-in-right {
+    animation: fadeInRight 0.3s ease-out forwards;
 }
 @keyframes fadeInUp {
     from {
@@ -634,6 +729,16 @@ const closeSearch = () => {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
 </style>

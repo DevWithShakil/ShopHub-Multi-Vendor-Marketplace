@@ -82,4 +82,7 @@ Route::middleware(['auth'])->group(function () {
 // API Search Route
 Route::get('/api/search', [HomeController::class, 'search'])->name('api.search');
 
+// Track Order Page
+Route::match(['get', 'post'], '/track-order', [HomeController::class, 'trackOrder'])->name('track.order');
+
 require __DIR__.'/auth.php';
