@@ -14,6 +14,7 @@ import {
     MinusIcon,
     PlusIcon,
     ChatBubbleLeftRightIcon,
+    ArrowRightIcon,
 } from "@heroicons/vue/24/outline";
 import {
     HeartIcon as HeartSolidIcon,
@@ -34,7 +35,7 @@ const quantity = ref(1);
 const activeImage = ref(props.product.thumb_image);
 const selectedVariant = ref(null);
 
-// ✅ JSON Name Helper
+// JSON Name Helper
 const getLocalizedName = (name) => {
     try {
         const parsed =
@@ -51,7 +52,6 @@ const getLocalizedName = (name) => {
     }
 };
 
-// Price Calculation
 const currentPrice = computed(() => {
     if (selectedVariant.value) return selectedVariant.value.price;
     return props.product.base_price;
@@ -65,7 +65,6 @@ const toggleWishlist = () => {
     wishlistStore.toggle(props.product.id);
 };
 
-// 🚀 Scroll to Reviews Function
 const scrollToReviews = () => {
     const element = document.getElementById("reviews");
     if (element) {
@@ -126,7 +125,6 @@ const scrollToReviews = () => {
                                 <ShareIcon class="w-5 h-5" />
                             </button>
                         </div>
-
                         <div
                             class="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
                         >
@@ -174,7 +172,6 @@ const scrollToReviews = () => {
                             <div
                                 @click="scrollToReviews"
                                 class="flex items-center gap-1 mb-4 cursor-pointer group hover:opacity-80 transition-opacity"
-                                title="Click to see reviews"
                             >
                                 <div class="flex text-yellow-400">
                                     <StarSolidIcon
@@ -208,7 +205,6 @@ const scrollToReviews = () => {
                                     Reviews</span
                                 >
                             </div>
-
                             <div
                                 class="flex items-center gap-1 text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20"
                             >
@@ -394,7 +390,7 @@ const scrollToReviews = () => {
                                                 product.reviews_avg_rating || 0
                                             )
                                                 ? 'fill-current'
-                                                : 'text-gray-600'
+                                                : 'text-gray-600 fill-none'
                                         "
                                     />
                                 </div>
@@ -448,8 +444,7 @@ const scrollToReviews = () => {
                                 </div>
                                 <span
                                     class="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-1 rounded"
-                                >
-                                    {{
+                                    >{{
                                         new Date(
                                             review.created_at
                                         ).toLocaleDateString("en-GB", {
@@ -457,16 +452,14 @@ const scrollToReviews = () => {
                                             month: "short",
                                             year: "numeric",
                                         })
-                                    }}
-                                </span>
+                                    }}</span
+                                >
                             </div>
-
                             <p
                                 class="text-gray-300 text-sm leading-relaxed pl-14 italic"
                             >
                                 "{{ review.comment }}"
                             </p>
-
                             <div
                                 class="mt-4 pl-14 flex items-center gap-2 text-[10px] font-bold text-green-400 uppercase tracking-widest"
                             >
@@ -474,7 +467,6 @@ const scrollToReviews = () => {
                                 Purchase
                             </div>
                         </div>
-
                         <div
                             v-if="
                                 !product.reviews || product.reviews.length === 0
@@ -491,6 +483,136 @@ const scrollToReviews = () => {
                                 Be the first to share your experience!
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                <div
+                    v-if="
+                        product.related_products &&
+                        product.related_products.length > 0
+                    "
+                    class="mt-24 border-t border-white/10 pt-16"
+                >
+                    <div class="flex justify-between items-end mb-8">
+                        <div>
+                            <p
+                                class="text-indigo-400 font-bold text-xs uppercase tracking-widest mb-2"
+                            >
+                                Discover More
+                            </p>
+                            <h2
+                                class="text-3xl lg:text-4xl font-black text-white tracking-tight"
+                            >
+                                You Might Also Like
+                            </h2>
+                        </div>
+                        <Link
+                            :href="
+                                route('products.index', {
+                                    category: product.category?.slug,
+                                })
+                            "
+                            class="text-sm font-bold text-gray-400 hover:text-white transition flex items-center gap-2 group"
+                        >
+                            View all
+                            <ArrowRightIcon
+                                class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                            />
+                        </Link>
+                    </div>
+
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                    >
+                        <Link
+                            v-for="related in product.related_products"
+                            :key="related.id"
+                            :href="route('product.details', related.slug)"
+                            class="group bg-[#151925] border border-white/5 rounded-3xl p-4 hover:border-indigo-500/30 hover:bg-[#1A1F2E] transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/10 flex flex-col h-full"
+                        >
+                            <div
+                                class="relative h-64 rounded-2xl bg-white overflow-hidden mb-5 flex-shrink-0"
+                            >
+                                <div class="block w-full h-full p-6">
+                                    <img
+                                        v-if="related.thumb_image"
+                                        :src="'/storage/' + related.thumb_image"
+                                        :alt="getLocalizedName(related.name)"
+                                        class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out mix-blend-multiply"
+                                    />
+                                    <div
+                                        v-else
+                                        class="w-full h-full flex items-center justify-center text-gray-300"
+                                    >
+                                        No Image
+                                    </div>
+                                </div>
+                                <span
+                                    v-if="related.discount_price"
+                                    class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
+                                    >Sale</span
+                                >
+                            </div>
+
+                            <div class="px-1 flex-1 flex flex-col">
+                                <h3
+                                    class="font-bold text-base text-white leading-snug group-hover:text-indigo-400 transition-colors mb-2 line-clamp-2 min-h-[3rem]"
+                                    :title="getLocalizedName(related.name)"
+                                >
+                                    {{ getLocalizedName(related.name) }}
+                                </h3>
+
+                                <div class="flex items-center gap-1 mb-4">
+                                    <div
+                                        class="flex items-center gap-0.5 text-yellow-400"
+                                    >
+                                        <StarSolidIcon
+                                            v-for="i in 5"
+                                            :key="i"
+                                            class="w-3 h-3"
+                                            :class="
+                                                i <=
+                                                Math.round(
+                                                    related.reviews_avg_rating ||
+                                                        0
+                                                )
+                                                    ? 'fill-current'
+                                                    : 'text-gray-700'
+                                            "
+                                        />
+                                    </div>
+                                    <span class="text-[10px] text-gray-500 ml-1"
+                                        >({{
+                                            related.reviews_count || 0
+                                        }})</span
+                                    >
+                                </div>
+
+                                <div
+                                    class="mt-auto flex items-center justify-between border-t border-white/5 pt-4"
+                                >
+                                    <div class="flex flex-col">
+                                        <span
+                                            v-if="related.discount_price"
+                                            class="text-xs text-gray-500 line-through font-medium"
+                                            >৳{{
+                                                parseInt(related.base_price) +
+                                                500
+                                            }}</span
+                                        >
+                                        <span
+                                            class="text-lg font-black text-white tracking-tight"
+                                            >৳{{ related.base_price }}</span
+                                        >
+                                    </div>
+                                    <button
+                                        class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:text-white transition-colors"
+                                    >
+                                        <ShoppingCartIcon class="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </div>
