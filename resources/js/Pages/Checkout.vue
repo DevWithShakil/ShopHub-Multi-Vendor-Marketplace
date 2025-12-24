@@ -11,18 +11,31 @@ import {
     HomeIcon,
     ChevronDownIcon,
     CreditCardIcon,
-    TicketIcon, // Imported for discount display
+    TicketIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import { watch, ref, computed } from "vue";
 import { locations } from "@/Data/bangladesh";
+import axios from "axios"; // ✅ Ensure axios is imported
 
 const cartStore = useCartStore();
 const page = usePage();
 
-// ✅ Coupon Data from Backend (Session)
-const appliedCoupon = computed(() => page.props.coupon || null);
+const toastMessage = ref(null);
+const toastType = ref("success");
+const isSubmitting = ref(false);
 
-// ✅ Calculate Totals
+const showToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    setTimeout(() => {
+        toastMessage.value = null;
+    }, 4000);
+};
+
+const appliedCoupon = computed(() => page.props.coupon || null);
 const shippingCost = 120;
 
 const discountAmount = computed(() => {
@@ -45,22 +58,54 @@ const form = useForm({
     total_price: 0,
 });
 
-const submitOrder = () => {
-    // ✅ 1. Set Items and Calculated Total Price
-    form.items = cartStore.items;
-    form.total_price = grandTotal.value; // Use the discounted total
+// ✅ Updated Submit Logic
+const submitOrder = async () => {
+    isSubmitting.value = true;
+    form.clearErrors();
 
-    form.post(route("checkout.store"), {
-        onSuccess: () => {
-            // ✅ 2. Clear cart only for COD (SSLCommerz redirects)
-            if (form.payment_method === "cod") {
-                cartStore.clearCart();
-            }
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
+    // Prepare payload manually since we use axios
+    const payload = {
+        ...form.data(),
+        items: cartStore.items,
+        total_price: grandTotal.value,
+    };
+
+    try {
+        const response = await axios.post(route("checkout.store"), payload);
+
+        if (form.payment_method === "cod") {
+            cartStore.clearCart();
+            showToast("Order placed successfully! Redirecting...", "success");
+
+            // ✅ Redirect using invoice_no from JSON response
+            setTimeout(() => {
+                if (response.data.invoice_no) {
+                    window.location.href = route(
+                        "order.success",
+                        response.data.invoice_no
+                    );
+                } else {
+                    // Fallback just in case
+                    window.location.href = "/";
+                }
+            }, 2000);
+        } else if (response.data.url) {
+            window.location.href = response.data.url;
+        }
+    } catch (error) {
+        isSubmitting.value = false;
+
+        if (error.response && error.response.data.errors) {
+            // Set errors to form object
+            Object.keys(error.response.data.errors).forEach((key) => {
+                form.setError(key, error.response.data.errors[key][0]);
+            });
+            showToast("Please fix the errors in the form.", "error");
+        } else {
+            console.error(error);
+            showToast("Something went wrong. Please try again.", "error");
+        }
+    }
 };
 
 const getLocalizedName = (name) => {
@@ -79,7 +124,6 @@ const getLocalizedName = (name) => {
     }
 };
 
-// 📍 Location Logic
 const districts = Object.keys(locations).sort();
 const availableThanas = ref([]);
 
@@ -99,6 +143,63 @@ watch(
 
 <template>
     <Head title="Secure Checkout" />
+
+    <transition
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-10 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div
+            v-if="toastMessage"
+            class="fixed bottom-6 right-6 z-[9999] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            :class="
+                toastType === 'success'
+                    ? 'bg-[#1A1F2E] border-green-500/20 border-l-green-500'
+                    : 'bg-[#1A1F2E] border-red-500/20 border-l-red-500'
+            "
+        >
+            <div
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                :class="
+                    toastType === 'success'
+                        ? 'bg-green-500/10 ring-green-500/20'
+                        : 'bg-red-500/10 ring-red-500/20'
+                "
+            >
+                <CheckCircleIcon
+                    v-if="toastType === 'success'"
+                    class="w-6 h-6 text-green-400"
+                />
+                <XCircleIcon v-else class="w-6 h-6 text-red-400" />
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-bold text-sm tracking-wide text-white">
+                    {{ toastType === "success" ? "Success!" : "Error!" }}
+                </h4>
+                <p
+                    class="text-xs mt-0.5 font-medium"
+                    :class="
+                        toastType === 'success'
+                            ? 'text-green-200/70'
+                            : 'text-red-200/70'
+                    "
+                >
+                    {{ toastMessage }}
+                </p>
+            </div>
+
+            <button
+                @click="toastMessage = null"
+                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+            >
+                <XMarkIcon class="w-4 h-4" />
+            </button>
+        </div>
+    </transition>
 
     <MainLayout>
         <div
@@ -452,7 +553,6 @@ watch(
                                         >৳{{ shippingCost }}</span
                                     >
                                 </div>
-
                                 <div
                                     v-if="appliedCoupon"
                                     class="flex justify-between text-green-400 animate-pulse"
@@ -482,30 +582,19 @@ watch(
                             <button
                                 type="submit"
                                 :disabled="
-                                    form.processing ||
-                                    cartStore.items.length === 0
+                                    isSubmitting || cartStore.items.length === 0
                                 "
                                 class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-500/30 transform transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                             >
                                 <LockClosedIcon
-                                    v-if="!form.processing"
+                                    v-if="!isSubmitting"
                                     class="w-5 h-5"
                                 />
-                                <span v-if="form.processing">{{
+                                <span v-if="isSubmitting">{{
                                     __("Processing...")
                                 }}</span>
                                 <span v-else>{{ __("Place Order") }}</span>
                             </button>
-
-                            <p
-                                class="mt-4 text-center text-[10px] text-gray-500"
-                            >
-                                {{
-                                    __(
-                                        "By placing this order, you agree to our Terms of Service and Privacy Policy."
-                                    )
-                                }}
-                            </p>
                         </div>
                     </div>
                 </form>
@@ -532,5 +621,19 @@ watch(
 option {
     background-color: #0b0f19;
     color: #e5e7eb;
+}
+/* Autofill Fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    -webkit-text-fill-color: #e5e7eb;
+    -webkit-box-shadow: 0 0 0px 1000px #131722 inset;
+    transition: background-color 5000s ease-in-out 0s;
 }
 </style>

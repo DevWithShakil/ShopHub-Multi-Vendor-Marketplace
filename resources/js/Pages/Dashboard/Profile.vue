@@ -5,40 +5,162 @@ import {
     UserCircleIcon,
     KeyIcon,
     CheckBadgeIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    XMarkIcon,
 } from "@heroicons/vue/24/outline";
+import { ref } from "vue";
 
 const user = usePage().props.auth.user;
 
+// ✅ Toast State (Only for Success)
+const toastMessage = ref(null);
+const toastType = ref("success");
+
+const showToast = (message) => {
+    toastMessage.value = message;
+    toastType.value = "success"; // Always success for toast
+    setTimeout(() => {
+        toastMessage.value = null;
+    }, 4000);
+};
+
+// Form: Personal Info
 const formInfo = useForm({
     name: user.name,
     email: user.email,
 });
 
+// Form: Password
 const formPassword = useForm({
     current_password: "",
     password: "",
     password_confirmation: "",
 });
 
+// ✅ Update Info Logic (Strict Validation)
 const updateInfo = () => {
-    formInfo.post(route("profile.update.info"), {
+    formInfo.clearErrors();
+
+    let hasError = false;
+
+    // 1. Check if Name is same
+    if (formInfo.name === user.name) {
+        formInfo.setError("name", "You have entered the same name as before.");
+        hasError = true;
+    }
+
+    // 2. Check if Email is same
+    // if (formInfo.email === user.email) {
+    //     formInfo.setError(
+    //         "email",
+    //         "You have entered the same email as before."
+    //     );
+    //     hasError = false;
+    // }
+
+    if (hasError) {
+        return;
+    }
+
+    // 3. Submit if valid changes exist
+    formInfo.patch(route("profile.update"), {
         preserveScroll: true,
         onSuccess: () => {
-            // Toast notification logic here if needed
+            showToast("Profile updated successfully!");
         },
+        onError: () => {},
     });
 };
 
+// ✅ Update Password Logic (Strict Validation)
 const updatePassword = () => {
-    formPassword.post(route("profile.update.password"), {
+    formPassword.clearErrors();
+    let hasError = false;
+
+    // 1. Check if Current & New Password are SAME
+    if (
+        formPassword.current_password &&
+        formPassword.password &&
+        formPassword.current_password === formPassword.password
+    ) {
+        formPassword.setError(
+            "password",
+            "New password cannot be the same as current password."
+        );
+        hasError = true;
+    }
+
+    // 2. Check Confirm Password Match
+    if (formPassword.password !== formPassword.password_confirmation) {
+        formPassword.setError(
+            "password_confirmation",
+            "Password confirmation does not match."
+        );
+        hasError = true;
+    }
+
+    // 3. Check Minimum Length
+    if (formPassword.password && formPassword.password.length < 8) {
+        formPassword.setError(
+            "password",
+            "Password must be at least 8 characters."
+        );
+        hasError = true;
+    }
+
+    if (hasError) return;
+
+    // 4. Submit
+    formPassword.put(route("password.update"), {
         preserveScroll: true,
-        onSuccess: () => formPassword.reset(),
+        onSuccess: () => {
+            formPassword.reset();
+            showToast("Password changed successfully!");
+        },
+        onError: (errors) => {},
     });
 };
 </script>
 
 <template>
     <Head title="Profile Settings" />
+
+    <transition
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-10 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div
+            v-if="toastMessage"
+            class="fixed bottom-10 right-6 z-[9999] max-w-sm w-full border border-green-500/20 bg-[#1A1F2E] border-l-4 border-l-green-500 shadow-2xl rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl animate-pulse-slow"
+        >
+            <div
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1 bg-green-500/10 ring-green-500/20"
+            >
+                <CheckCircleIcon class="w-6 h-6 text-green-400" />
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-bold text-sm tracking-wide text-white">
+                    Success!
+                </h4>
+                <p class="text-xs mt-0.5 font-medium text-green-200/70">
+                    {{ toastMessage }}
+                </p>
+            </div>
+
+            <button
+                @click="toastMessage = null"
+                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+            >
+                <XMarkIcon class="w-4 h-4" />
+            </button>
+        </div>
+    </transition>
 
     <UserDashboardLayout>
         <div
@@ -107,11 +229,16 @@ const updatePassword = () => {
                                     type="text"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
                                     placeholder="John Doe"
+                                    :class="{
+                                        'border-rose-500 focus:ring-rose-500':
+                                            formInfo.errors.name,
+                                    }"
                                 />
                                 <p
                                     v-if="formInfo.errors.name"
-                                    class="text-rose-500 text-xs mt-1 font-bold"
+                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
                                 >
+                                    <XCircleIcon class="w-4 h-4" />
                                     {{ formInfo.errors.name }}
                                 </p>
                             </div>
@@ -126,11 +253,16 @@ const updatePassword = () => {
                                     type="email"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
                                     placeholder="john@example.com"
+                                    :class="{
+                                        'border-rose-500 focus:ring-rose-500':
+                                            formInfo.errors.email,
+                                    }"
                                 />
                                 <p
                                     v-if="formInfo.errors.email"
-                                    class="text-rose-500 text-xs mt-1 font-bold"
+                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
                                 >
+                                    <XCircleIcon class="w-4 h-4" />
                                     {{ formInfo.errors.email }}
                                 </p>
                             </div>
@@ -195,11 +327,17 @@ const updatePassword = () => {
                                     v-model="formPassword.current_password"
                                     type="password"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
+                                    :class="{
+                                        'border-rose-500 focus:ring-rose-500':
+                                            formPassword.errors
+                                                .current_password,
+                                    }"
                                 />
                                 <p
                                     v-if="formPassword.errors.current_password"
-                                    class="text-rose-500 text-xs mt-1 font-bold"
+                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
                                 >
+                                    <XCircleIcon class="w-4 h-4" />
                                     {{ formPassword.errors.current_password }}
                                 </p>
                             </div>
@@ -214,11 +352,16 @@ const updatePassword = () => {
                                         v-model="formPassword.password"
                                         type="password"
                                         class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
+                                        :class="{
+                                            'border-rose-500 focus:ring-rose-500':
+                                                formPassword.errors.password,
+                                        }"
                                     />
                                     <p
                                         v-if="formPassword.errors.password"
-                                        class="text-rose-500 text-xs mt-1 font-bold"
+                                        class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
                                     >
+                                        <XCircleIcon class="w-4 h-4" />
                                         {{ formPassword.errors.password }}
                                     </p>
                                 </div>
@@ -233,7 +376,25 @@ const updatePassword = () => {
                                         "
                                         type="password"
                                         class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
+                                        :class="{
+                                            'border-rose-500 focus:ring-rose-500':
+                                                formPassword.errors
+                                                    .password_confirmation,
+                                        }"
                                     />
+                                    <p
+                                        v-if="
+                                            formPassword.errors
+                                                .password_confirmation
+                                        "
+                                        class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
+                                    >
+                                        <XCircleIcon class="w-4 h-4" />
+                                        {{
+                                            formPassword.errors
+                                                .password_confirmation
+                                        }}
+                                    </p>
                                 </div>
                             </div>
 

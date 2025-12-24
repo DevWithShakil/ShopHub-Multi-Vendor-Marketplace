@@ -1,17 +1,23 @@
 <script setup>
-import { Head, Link, useForm } from "@inertiajs/vue3";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import {
     ShoppingBagIcon,
     EnvelopeIcon,
     LockClosedIcon,
     CheckIcon,
-    FingerPrintIcon, // Professional Icon
+    FingerPrintIcon,
     ArrowRightIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    XMarkIcon,
+    InformationCircleIcon, // New Icon for Status
 } from "@heroicons/vue/24/outline";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
-defineProps({
+const props = defineProps({
     canResetPassword: Boolean,
-    status: String,
+    status: String, // Flash message from backend (e.g., "Logged out successfully")
 });
 
 const form = useForm({
@@ -20,15 +26,128 @@ const form = useForm({
     remember: false,
 });
 
-const submit = () => {
-    form.post(route("login"), {
-        onFinish: () => form.reset("password"),
-    });
+const toastMessage = ref(null);
+const toastType = ref("success");
+const isSubmitting = ref(false);
+
+const showToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    setTimeout(() => {
+        toastMessage.value = null;
+    }, 4000);
+};
+
+// ✅ Handle Logout Message or Status Message
+onMounted(() => {
+    if (props.status) {
+        showToast(props.status, "info");
+    }
+
+    // Check for query param 'logged_out' if backend sends it
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("logged_out")) {
+        showToast("You have been logged out successfully.", "success");
+    }
+});
+
+const submit = async () => {
+    isSubmitting.value = true;
+    form.clearErrors();
+
+    try {
+        await axios.post(route("login"), form.data());
+        showToast("Login successful! Redirecting to Home...", "success");
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 1500);
+    } catch (error) {
+        isSubmitting.value = false;
+        if (error.response && error.response.data.errors) {
+            Object.keys(error.response.data.errors).forEach((key) => {
+                form.setError(key, error.response.data.errors[key][0]);
+            });
+            showToast("Invalid credentials. Please try again.", "error");
+        } else {
+            showToast("Something went wrong. Please try again.", "error");
+        }
+    }
 };
 </script>
 
 <template>
     <Head title="Log in" />
+
+    <transition
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-10 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div
+            v-if="toastMessage"
+            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            :class="{
+                'bg-[#1A1F2E] border-green-500/20 border-l-green-500':
+                    toastType === 'success',
+                'bg-[#1A1F2E] border-red-500/20 border-l-red-500':
+                    toastType === 'error',
+                'bg-[#1A1F2E] border-blue-500/20 border-l-blue-500':
+                    toastType === 'info',
+            }"
+        >
+            <div
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                :class="{
+                    'bg-green-500/10 ring-green-500/20':
+                        toastType === 'success',
+                    'bg-red-500/10 ring-red-500/20': toastType === 'error',
+                    'bg-blue-500/10 ring-blue-500/20': toastType === 'info',
+                }"
+            >
+                <CheckCircleIcon
+                    v-if="toastType === 'success'"
+                    class="w-6 h-6 text-green-400"
+                />
+                <XCircleIcon
+                    v-else-if="toastType === 'error'"
+                    class="w-6 h-6 text-red-400"
+                />
+                <InformationCircleIcon v-else class="w-6 h-6 text-blue-400" />
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-bold text-sm tracking-wide text-white">
+                    {{
+                        toastType === "success"
+                            ? "Success!"
+                            : toastType === "error"
+                            ? "Error!"
+                            : "Info"
+                    }}
+                </h4>
+                <p
+                    class="text-xs mt-0.5 font-medium"
+                    :class="{
+                        'text-green-200/70': toastType === 'success',
+                        'text-red-200/70': toastType === 'error',
+                        'text-blue-200/70': toastType === 'info',
+                    }"
+                >
+                    {{ toastMessage }}
+                </p>
+            </div>
+
+            <button
+                @click="toastMessage = null"
+                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+            >
+                <XMarkIcon class="w-4 h-4" />
+            </button>
+        </div>
+    </transition>
 
     <div
         class="min-h-screen flex bg-white selection:bg-indigo-500 selection:text-white"
@@ -38,7 +157,7 @@ const submit = () => {
                 <img
                     src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=2070&auto=format&fit=crop"
                     alt="Login Background"
-                    class="w-full h-full object-cover opacity-30"
+                    class="w-full h-full object-cover opacity-30 transition-transform duration-[10s] hover:scale-110"
                 />
                 <div
                     class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-black/60"
@@ -73,7 +192,6 @@ const submit = () => {
                         products with our secure dashboard.
                     </p>
                 </div>
-
                 <div
                     class="flex justify-between items-end border-t border-white/10 pt-8"
                 >
@@ -112,13 +230,6 @@ const submit = () => {
                     <p class="text-gray-500 mt-2 text-sm">
                         Please enter your details to access your account.
                     </p>
-                </div>
-
-                <div
-                    v-if="status"
-                    class="mb-6 font-medium text-sm text-green-600 bg-green-50 px-4 py-3 rounded-xl border border-green-100 flex items-center gap-2"
-                >
-                    <CheckIcon class="w-5 h-5" /> {{ status }}
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-5">
@@ -162,9 +273,8 @@ const submit = () => {
                                 v-if="canResetPassword"
                                 :href="route('password.request')"
                                 class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                >Forgot password?</Link
                             >
-                                Forgot password?
-                            </Link>
                         </div>
                         <div class="relative">
                             <div
@@ -213,15 +323,14 @@ const submit = () => {
                     </div>
 
                     <button
-                        :disabled="form.processing"
+                        :disabled="isSubmitting"
                         class="w-full py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg shadow-gray-200 transform transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 group"
                     >
-                        <span v-if="!form.processing">Sign In</span>
+                        <span v-if="!isSubmitting">Sign In</span>
                         <ArrowRightIcon
-                            v-if="!form.processing"
+                            v-if="!isSubmitting"
                             class="w-4 h-4 group-hover:translate-x-1 transition-transform"
                         />
-
                         <svg
                             v-else
                             class="animate-spin h-5 w-5 text-white"
@@ -251,9 +360,8 @@ const submit = () => {
                     <Link
                         :href="route('register')"
                         class="font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >Create account</Link
                     >
-                        Create account
-                    </Link>
                 </p>
             </div>
         </div>

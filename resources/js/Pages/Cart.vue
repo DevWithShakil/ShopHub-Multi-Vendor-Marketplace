@@ -15,8 +15,10 @@ import {
     XMarkIcon,
     CheckCircleIcon,
     ExclamationCircleIcon,
+    InformationCircleIcon,
+    XCircleIcon,
 } from "@heroicons/vue/24/outline";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const cartStore = useCartStore();
 const page = usePage();
@@ -26,9 +28,23 @@ const couponForm = useForm({
 });
 
 const appliedCoupon = computed(() => page.props.coupon || null);
-const successMessage = computed(() => page.props.flash?.success || null);
 
+// ✅ Toast Logic
+const toastMessage = ref(null);
+const toastType = ref("success"); // success | info | error
+
+const showToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    setTimeout(() => {
+        toastMessage.value = null;
+    }, 3000);
+};
+
+// ✅ Handle Coupon Apply
 const applyCoupon = () => {
+    couponForm.clearErrors();
+
     couponForm
         .transform((data) => ({
             ...data,
@@ -42,12 +58,43 @@ const applyCoupon = () => {
         }))
         .post(route("coupon.apply"), {
             preserveScroll: true,
-            onSuccess: () => couponForm.reset(),
+            onSuccess: () => {
+                couponForm.reset();
+                showToast("Coupon applied successfully!", "success");
+            },
+            onError: (errors) => {
+                // ❌ টোস্ট রিমুভ করা হয়েছে, শুধু ইনপুটের নিচে এরর সেট করা হবে
+                if (!couponForm.errors.code) {
+                    couponForm.setError("code", "Invalid coupon or expired");
+                }
+            },
         });
 };
 
+// ✅ Handle Coupon Remove
 const removeCoupon = () => {
-    couponForm.delete(route("coupon.remove"), { preserveScroll: true });
+    couponForm.delete(route("coupon.remove"), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast("Coupon removed.", "info");
+        },
+    });
+};
+
+// ✅ Remove Item Logic
+const removeItem = (id) => {
+    cartStore.removeFromCart(id);
+    showToast("Item removed from cart.", "error");
+};
+
+// ✅ Decrease Quantity Logic
+const decreaseQuantity = (item) => {
+    if (item.quantity > 1) {
+        item.quantity--;
+    } else {
+        cartStore.removeFromCart(item.cartId);
+        showToast("Item removed from cart.", "error");
+    }
 };
 
 const shippingCost = 120;
@@ -59,7 +106,7 @@ const grandTotal = computed(() => {
     return total > 0 ? total : 0;
 });
 
-// ✅ JSON Name Helper
+// JSON Name Helper
 const getLocalizedName = (name) => {
     try {
         const parsed =
@@ -79,6 +126,77 @@ const getLocalizedName = (name) => {
 
 <template>
     <Head title="My Cart" />
+
+    <transition
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-10 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div
+            v-if="toastMessage"
+            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            :class="{
+                'bg-[#1A1F2E] border-green-500/20 border-l-green-500':
+                    toastType === 'success',
+                'bg-[#1A1F2E] border-blue-500/20 border-l-blue-500':
+                    toastType === 'info',
+                'bg-[#1A1F2E] border-red-500/20 border-l-red-500':
+                    toastType === 'error',
+            }"
+        >
+            <div
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                :class="{
+                    'bg-green-500/10 ring-green-500/20':
+                        toastType === 'success',
+                    'bg-blue-500/10 ring-blue-500/20': toastType === 'info',
+                    'bg-red-500/10 ring-red-500/20': toastType === 'error',
+                }"
+            >
+                <CheckCircleIcon
+                    v-if="toastType === 'success'"
+                    class="w-6 h-6 text-green-400"
+                />
+                <InformationCircleIcon
+                    v-else-if="toastType === 'info'"
+                    class="w-6 h-6 text-blue-400"
+                />
+                <XCircleIcon v-else class="w-6 h-6 text-red-400" />
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-bold text-sm tracking-wide text-white">
+                    {{
+                        toastType === "success"
+                            ? "Success"
+                            : toastType === "info"
+                            ? "Updated"
+                            : "Removed"
+                    }}
+                </h4>
+                <p
+                    class="text-xs mt-0.5 font-medium"
+                    :class="{
+                        'text-green-200/70': toastType === 'success',
+                        'text-blue-200/70': toastType === 'info',
+                        'text-red-200/70': toastType === 'error',
+                    }"
+                >
+                    {{ toastMessage }}
+                </p>
+            </div>
+
+            <button
+                @click="toastMessage = null"
+                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+            >
+                <XMarkIcon class="w-4 h-4" />
+            </button>
+        </div>
+    </transition>
 
     <MainLayout>
         <div
@@ -234,13 +352,7 @@ const getLocalizedName = (name) => {
                                         class="flex items-center bg-white/5 rounded-xl border border-white/10 p-1"
                                     >
                                         <button
-                                            @click="
-                                                item.quantity > 1
-                                                    ? item.quantity--
-                                                    : cartStore.removeFromCart(
-                                                          item.cartId
-                                                      )
-                                            "
+                                            @click="decreaseQuantity(item)"
                                             class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-white/10 hover:text-rose-500 transition"
                                         >
                                             <MinusIcon class="w-4 h-4" />
@@ -257,11 +369,7 @@ const getLocalizedName = (name) => {
                                         </button>
                                     </div>
                                     <button
-                                        @click="
-                                            cartStore.removeFromCart(
-                                                item.cartId
-                                            )
-                                        "
+                                        @click="removeItem(item.cartId)"
                                         class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-rose-500 transition-colors"
                                     >
                                         <TrashIcon class="w-4 h-4" />
@@ -351,6 +459,7 @@ const getLocalizedName = (name) => {
                                             "
                                             @keydown.enter.prevent="applyCoupon"
                                         />
+
                                         <button
                                             @click="applyCoupon"
                                             :disabled="
@@ -377,13 +486,6 @@ const getLocalizedName = (name) => {
                                             class="w-3 h-3"
                                         />
                                         {{ couponForm.errors.code }}
-                                    </p>
-                                    <p
-                                        v-if="successMessage && !appliedCoupon"
-                                        class="text-green-400 text-xs mt-2 flex items-center gap-1"
-                                    >
-                                        <CheckCircleIcon class="w-3 h-3" />
-                                        {{ successMessage }}
                                     </p>
                                 </div>
                             </div>
@@ -467,19 +569,3 @@ const getLocalizedName = (name) => {
         </div>
     </MainLayout>
 </template>
-
-<style scoped>
-.animate-fade-in-up {
-    animation: fadeInUp 0.5s ease-out forwards;
-}
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-</style>

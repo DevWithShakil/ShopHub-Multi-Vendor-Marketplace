@@ -1,13 +1,17 @@
 <script setup>
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Head, Link, usePage, router } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
-import HeroSlider from "@/Components/HeroSlider.vue"; // ✅ Slider Import
-import CategoryMenu from "@/Components/CategoryMenu.vue"; // ✅ Menu Import
+import HeroSlider from "@/Components/HeroSlider.vue";
+import CategoryMenu from "@/Components/CategoryMenu.vue";
 import {
     ShoppingCartIcon,
     ArrowRightIcon,
     HeartIcon,
     TagIcon,
+    FireIcon,
+    ChevronDownIcon,
+    CheckCircleIcon, // ✅ New
+    XMarkIcon, // ✅ New
 } from "@heroicons/vue/24/outline";
 import {
     HeartIcon as HeartSolidIcon,
@@ -15,7 +19,7 @@ import {
 } from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
-import { computed } from "vue";
+import { ref, computed } from "vue";
 
 // Props
 const props = defineProps({
@@ -27,6 +31,18 @@ const props = defineProps({
 const page = usePage();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
+
+// --- 🔔 Toast Logic ---
+const toastMessage = ref(null);
+const toastType = ref("success"); // success | info
+
+const showToast = (message, type = "success") => {
+    toastMessage.value = message;
+    toastType.value = type;
+    setTimeout(() => {
+        toastMessage.value = null;
+    }, 3000);
+};
 
 // --- Helper Functions ---
 const getLocalizedName = (nameField) => {
@@ -61,13 +77,101 @@ const productsByRootCategory = computed(() => {
     return grouped;
 });
 
-// Actions
-const addToCart = (product) => cartStore.addToCart(product);
-const toggleWishlist = (product) => wishlistStore.toggle(product.id);
+const addToCart = (product) => {
+    cartStore.addToCart(product, 1); // Default quantity 1
+    showToast("Added to cart successfully!", "success");
+};
+
+// ✅ Toggle Wishlist
+const toggleWishlist = (product) => {
+    if (wishlistStore.isInWishlist(product.id)) {
+        wishlistStore.toggle(product.id);
+        showToast("Removed from Wishlist.", "info");
+    } else {
+        wishlistStore.toggle(product.id);
+        showToast("Added to Wishlist!", "success");
+    }
+};
+
+// Scroll Logic
+const scrollToSection = (categoryName, categorySlug) => {
+    const sectionId =
+        "cat-section-" + categoryName.replace(/\s+/g, "-").toLowerCase();
+    const element = document.getElementById(sectionId);
+    if (element) {
+        const offset = 100;
+        const rect = element.getBoundingClientRect();
+        const scrollTop =
+            window.pageYOffset || document.documentElement.scrollTop;
+        window.scrollTo({
+            top: rect.top + scrollTop - offset,
+            behavior: "smooth",
+        });
+    } else {
+        router.visit(route("products.index", { category: categorySlug }));
+    }
+};
 </script>
 
 <template>
     <Head title="Home" />
+
+    <transition
+        enter-active-class="transform ease-out duration-300 transition"
+        enter-from-class="translate-y-10 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div
+            v-if="toastMessage"
+            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            :class="
+                toastType === 'success'
+                    ? 'bg-[#1A1F2E] border-green-500/20 border-l-green-500'
+                    : 'bg-[#1A1F2E] border-blue-500/20 border-l-blue-500'
+            "
+        >
+            <div
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                :class="
+                    toastType === 'success'
+                        ? 'bg-green-500/10 ring-green-500/20'
+                        : 'bg-blue-500/10 ring-blue-500/20'
+                "
+            >
+                <CheckCircleIcon
+                    v-if="toastType === 'success'"
+                    class="w-6 h-6 text-green-400"
+                />
+                <HeartIcon v-else class="w-6 h-6 text-blue-400" />
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-bold text-sm tracking-wide text-white">
+                    {{ toastType === "success" ? "Success!" : "Updated" }}
+                </h4>
+                <p
+                    class="text-xs mt-0.5 font-medium"
+                    :class="
+                        toastType === 'success'
+                            ? 'text-green-200/70'
+                            : 'text-blue-200/70'
+                    "
+                >
+                    {{ toastMessage }}
+                </p>
+            </div>
+
+            <button
+                @click="toastMessage = null"
+                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+            >
+                <XMarkIcon class="w-4 h-4" />
+            </button>
+        </div>
+    </transition>
 
     <MainLayout>
         <HeroSlider :slides="slides" />
@@ -153,6 +257,7 @@ const toggleWishlist = (product) => wishlistStore.toggle(product.id);
                                     class="absolute top-3 left-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10"
                                     >Sale</span
                                 >
+
                                 <div
                                     class="absolute top-3 right-3 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300"
                                 >
@@ -172,6 +277,7 @@ const toggleWishlist = (product) => wishlistStore.toggle(product.id);
                                     </button>
                                 </div>
                             </div>
+
                             <div class="px-1 flex-1 flex flex-col">
                                 <p
                                     class="text-xs text-indigo-400 font-bold uppercase tracking-wider mb-2"
@@ -192,6 +298,7 @@ const toggleWishlist = (product) => wishlistStore.toggle(product.id);
                                         {{ getLocalizedName(product.name) }}
                                     </h3>
                                 </Link>
+
                                 <Link
                                     :href="
                                         route('product.details', product.slug) +
@@ -228,6 +335,7 @@ const toggleWishlist = (product) => wishlistStore.toggle(product.id);
                                         }})</span
                                     >
                                 </Link>
+
                                 <div
                                     class="mt-auto flex items-center justify-between border-t border-white/5 pt-4"
                                 >
@@ -245,6 +353,7 @@ const toggleWishlist = (product) => wishlistStore.toggle(product.id);
                                             >৳{{ product.base_price }}</span
                                         >
                                     </div>
+
                                     <button
                                         @click.prevent="addToCart(product)"
                                         class="w-10 h-10 bg-white text-gray-900 rounded-full flex items-center justify-center shadow-lg shadow-white/10 hover:bg-indigo-600 hover:text-white hover:scale-110 hover:rotate-12 transition-all duration-300"
