@@ -18,7 +18,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import { watch, ref, computed } from "vue";
 import { locations } from "@/Data/bangladesh";
-import axios from "axios"; // ✅ Ensure axios is imported
+import axios from "axios";
 
 const cartStore = useCartStore();
 const page = usePage();

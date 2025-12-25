@@ -1,26 +1,23 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import MainLayout from "@/Layouts/MainLayout.vue";
 import {
-    StarIcon as StarOutlineIcon, // Empty Star এর জন্য
     ShieldCheckIcon,
     TruckIcon,
     ShoppingCartIcon,
     HeartIcon,
-    ShareIcon,
     HomeIcon,
     CheckBadgeIcon,
     MinusIcon,
     PlusIcon,
     ChatBubbleLeftRightIcon,
-    ArrowRightIcon,
     CheckCircleIcon,
     XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import {
     HeartIcon as HeartSolidIcon,
-    StarIcon as StarSolidIcon, // Filled Star এর জন্য
+    StarIcon as StarSolidIcon,
 } from "@heroicons/vue/24/solid";
 import { useCartStore } from "@/Stores/cartStore";
 import { useWishlistStore } from "@/Stores/wishlistStore";
@@ -39,6 +36,7 @@ const selectedVariant = ref(null);
 const toastMessage = ref(null);
 const toastType = ref("success");
 
+// --- 🔔 Toast Helper ---
 const showToast = (message, type = "success") => {
     toastMessage.value = message;
     toastType.value = type;
@@ -47,6 +45,7 @@ const showToast = (message, type = "success") => {
     }, 3000);
 };
 
+// --- Helper: Localized Name ---
 const getLocalizedName = (name) => {
     try {
         const parsed =
@@ -63,11 +62,13 @@ const getLocalizedName = (name) => {
     }
 };
 
+// --- Computed Price ---
 const currentPrice = computed(() => {
     if (selectedVariant.value) return selectedVariant.value.price;
     return props.product.base_price;
 });
 
+// --- Actions ---
 const addToCart = () => {
     cartStore.addToCart(props.product, quantity.value, selectedVariant.value);
     showToast(`Added ${quantity.value} item(s) to cart!`, "success");
@@ -89,6 +90,22 @@ const scrollToReviews = () => {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 };
+
+// --- 👁️ Recently Viewed Logic ---
+onMounted(() => {
+    // Save to LocalStorage
+    let viewed = JSON.parse(localStorage.getItem("recently_viewed")) || [];
+    viewed = viewed.filter((p) => p.id !== props.product.id); // Remove duplicate
+    viewed.unshift({
+        id: props.product.id,
+        name: getLocalizedName(props.product.name),
+        slug: props.product.slug,
+        base_price: props.product.base_price,
+        thumb_image: props.product.thumb_image,
+    });
+    if (viewed.length > 10) viewed = viewed.slice(0, 10); // Keep max 10
+    localStorage.setItem("recently_viewed", JSON.stringify(viewed));
+});
 </script>
 
 <template>
@@ -104,7 +121,7 @@ const scrollToReviews = () => {
     >
         <div
             v-if="toastMessage"
-            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-2xl rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4"
             :class="
                 toastType === 'success'
                     ? 'bg-[#1A1F2E] border-green-500/20 border-l-green-500'
@@ -112,11 +129,11 @@ const scrollToReviews = () => {
             "
         >
             <div
-                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                 :class="
                     toastType === 'success'
-                        ? 'bg-green-500/10 ring-green-500/20'
-                        : 'bg-blue-500/10 ring-blue-500/20'
+                        ? 'bg-green-500/10'
+                        : 'bg-blue-500/10'
                 "
             >
                 <CheckCircleIcon
@@ -125,26 +142,15 @@ const scrollToReviews = () => {
                 />
                 <HeartIcon v-else class="w-6 h-6 text-blue-400" />
             </div>
-
-            <div class="flex-1">
-                <h4 class="font-bold text-sm tracking-wide text-white">
+            <div class="flex-1 text-white">
+                <h4 class="font-bold text-sm">
                     {{ toastType === "success" ? "Success!" : "Updated" }}
                 </h4>
-                <p
-                    class="text-xs mt-0.5 font-medium"
-                    :class="
-                        toastType === 'success'
-                            ? 'text-green-200/70'
-                            : 'text-blue-200/70'
-                    "
-                >
-                    {{ toastMessage }}
-                </p>
+                <p class="text-xs text-gray-400">{{ toastMessage }}</p>
             </div>
-
             <button
                 @click="toastMessage = null"
-                class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
+                class="p-2 text-gray-400 hover:text-white"
             >
                 <XMarkIcon class="w-4 h-4" />
             </button>
@@ -182,11 +188,11 @@ const scrollToReviews = () => {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
                     <div class="space-y-6">
                         <div
-                            class="relative bg-white rounded-3xl p-8 h-[450px] flex items-center justify-center overflow-hidden group shadow-2xl shadow-indigo-900/20 border border-white/5"
+                            class="relative bg-white rounded-3xl p-8 h-[450px] flex items-center justify-center overflow-hidden group shadow-2xl border border-white/5"
                         >
                             <img
                                 :src="'/storage/' + activeImage"
-                                class="h-full object-contain group-hover:scale-110 transition duration-700 ease-out mix-blend-multiply"
+                                class="h-full object-contain group-hover:scale-110 transition duration-700 ease-out"
                                 :alt="getLocalizedName(product.name)"
                             />
                             <span
@@ -195,6 +201,7 @@ const scrollToReviews = () => {
                                 >Sale</span
                             >
                         </div>
+
                         <div
                             class="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
                         >
@@ -209,7 +216,7 @@ const scrollToReviews = () => {
                             >
                                 <img
                                     :src="'/storage/' + product.thumb_image"
-                                    class="w-full h-full object-contain mix-blend-multiply"
+                                    class="w-full h-full object-contain"
                                 />
                             </button>
                             <button
@@ -225,7 +232,7 @@ const scrollToReviews = () => {
                             >
                                 <img
                                     :src="'/storage/' + img"
-                                    class="w-full h-full object-contain mix-blend-multiply"
+                                    class="w-full h-full object-contain"
                                 />
                             </button>
                         </div>
@@ -241,18 +248,10 @@ const scrollToReviews = () => {
                         <div class="flex items-center gap-6 mb-8 text-sm">
                             <div
                                 @click="scrollToReviews"
-                                class="flex items-center gap-1 mb-4 cursor-pointer group hover:opacity-80 transition-opacity"
+                                class="flex items-center gap-1 cursor-pointer group hover:opacity-80 transition-opacity"
                             >
                                 <div class="flex">
-                                    <component
-                                        :is="
-                                            i <=
-                                            Math.round(
-                                                product.reviews_avg_rating || 0
-                                            )
-                                                ? StarSolidIcon
-                                                : StarSolidIcon
-                                        "
+                                    <StarSolidIcon
                                         v-for="i in 5"
                                         :key="i"
                                         class="w-4 h-4"
@@ -268,20 +267,22 @@ const scrollToReviews = () => {
                                 </div>
                                 <span
                                     class="text-xs font-bold text-gray-400 ml-1"
-                                >
-                                    ({{
+                                    >({{
                                         product.reviews_avg_rating
                                             ? parseFloat(
                                                   product.reviews_avg_rating
                                               ).toFixed(1)
                                             : "0.0"
-                                    }})
-                                </span>
+                                    }})</span
+                                >
                                 <span
                                     class="text-[10px] text-gray-500 ml-1 group-hover:text-indigo-400 group-hover:underline"
+                                    >|
+                                    {{
+                                        product.reviews_count || 0
+                                    }}
+                                    Reviews</span
                                 >
-                                    | {{ product.reviews_count || 0 }} Reviews
-                                </span>
                             </div>
                             <div
                                 class="flex items-center gap-1 text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20"
@@ -324,7 +325,7 @@ const scrollToReviews = () => {
                                     class="px-4 py-2.5 rounded-lg text-sm font-bold transition-all border"
                                     :class="
                                         selectedVariant?.id === variant.id
-                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg'
                                             : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/30'
                                     "
                                 >
@@ -340,7 +341,7 @@ const scrollToReviews = () => {
                             </div>
                         </div>
 
-                        <div class="hidden lg:flex flex-row gap-4 mb-8">
+                        <div class="flex flex-col sm:flex-row gap-4 mb-8">
                             <div
                                 class="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 w-fit"
                             >
@@ -363,7 +364,7 @@ const scrollToReviews = () => {
                             </div>
                             <button
                                 @click="addToCart"
-                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
+                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2"
                             >
                                 <ShoppingCartIcon class="w-5 h-5" />
                                 {{ __("Add to Cart") }}
@@ -442,50 +443,25 @@ const scrollToReviews = () => {
                 </div>
 
                 <div id="reviews" class="mt-16 border-t border-white/10 pt-12">
-                    <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6"
+                    <h2
+                        class="text-3xl font-black text-white tracking-tight mb-6"
                     >
-                        <div>
-                            <h2
-                                class="text-3xl font-black text-white tracking-tight mb-2"
-                            >
-                                Customer Reviews
-                            </h2>
-                            <div class="flex items-center gap-3">
-                                <div class="flex">
-                                    <StarSolidIcon
-                                        v-for="i in 5"
-                                        :key="i"
-                                        class="w-5 h-5"
-                                        :class="
-                                            i <=
-                                            Math.round(
-                                                product.reviews_avg_rating || 0
-                                            )
-                                                ? 'text-yellow-400'
-                                                : 'text-gray-700'
-                                        "
-                                    />
-                                </div>
-                                <span class="text-gray-300 font-bold"
-                                    >Based on
-                                    {{ product.reviews_count || 0 }}
-                                    reviews</span
-                                >
-                            </div>
-                        </div>
-                    </div>
+                        Customer Reviews
+                    </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        v-if="product.reviews && product.reviews.length > 0"
+                        class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
                         <div
                             v-for="review in product.reviews"
                             :key="review.id"
-                            class="bg-white/5 border border-white/10 rounded-[2rem] p-6 backdrop-blur-md hover:bg-white/10 transition-all duration-300"
+                            class="bg-white/5 border border-white/10 rounded-[2rem] p-6 backdrop-blur-md"
                         >
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center gap-4">
                                     <div
-                                        class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20"
+                                        class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg"
                                     >
                                         {{
                                             review.user.name
@@ -518,11 +494,7 @@ const scrollToReviews = () => {
                                     >{{
                                         new Date(
                                             review.created_at
-                                        ).toLocaleDateString("en-GB", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric",
-                                        })
+                                        ).toLocaleDateString()
                                     }}</span
                                 >
                             </div>
@@ -532,23 +504,19 @@ const scrollToReviews = () => {
                                 "{{ review.comment }}"
                             </p>
                         </div>
+                    </div>
 
-                        <div
-                            v-if="
-                                !product.reviews || product.reviews.length === 0
-                            "
-                            class="col-span-full text-center py-12 bg-white/5 rounded-3xl border border-dashed border-white/10"
-                        >
-                            <ChatBubbleLeftRightIcon
-                                class="w-12 h-12 text-gray-600 mx-auto mb-4"
-                            />
-                            <p class="text-gray-400 font-bold">
-                                No reviews yet.
-                            </p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                Be the first to share your experience!
-                            </p>
-                        </div>
+                    <div
+                        v-else
+                        class="text-center py-12 bg-white/5 rounded-3xl border border-dashed border-white/10"
+                    >
+                        <ChatBubbleLeftRightIcon
+                            class="w-12 h-12 text-gray-600 mx-auto mb-4"
+                        />
+                        <p class="text-gray-400 font-bold">No reviews yet.</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Be the first to share your experience!
+                        </p>
                     </div>
                 </div>
 
@@ -559,13 +527,11 @@ const scrollToReviews = () => {
                     "
                     class="mt-24 border-t border-white/10 pt-16"
                 >
-                    <div class="flex justify-between items-end mb-8">
-                        <h2
-                            class="text-3xl lg:text-4xl font-black text-white tracking-tight"
-                        >
-                            You Might Also Like
-                        </h2>
-                    </div>
+                    <h2
+                        class="text-3xl lg:text-4xl font-black text-white tracking-tight mb-8"
+                    >
+                        You Might Also Like
+                    </h2>
                     <div
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                     >
@@ -578,18 +544,16 @@ const scrollToReviews = () => {
                             <div
                                 class="relative h-64 rounded-2xl bg-white overflow-hidden mb-5 flex-shrink-0"
                             >
-                                <div class="block w-full h-full p-6">
-                                    <img
-                                        v-if="related.thumb_image"
-                                        :src="'/storage/' + related.thumb_image"
-                                        class="w-full h-full object-contain"
-                                    />
-                                    <div
-                                        v-else
-                                        class="w-full h-full flex items-center justify-center text-gray-300"
-                                    >
-                                        No Image
-                                    </div>
+                                <img
+                                    v-if="related.thumb_image"
+                                    :src="'/storage/' + related.thumb_image"
+                                    class="w-full h-full object-contain"
+                                />
+                                <div
+                                    v-else
+                                    class="w-full h-full flex items-center justify-center text-gray-300"
+                                >
+                                    No Image
                                 </div>
                             </div>
                             <h3
@@ -597,28 +561,6 @@ const scrollToReviews = () => {
                             >
                                 {{ getLocalizedName(related.name) }}
                             </h3>
-
-                            <div class="flex items-center gap-1 mb-4">
-                                <div class="flex">
-                                    <StarSolidIcon
-                                        v-for="i in 5"
-                                        :key="i"
-                                        class="w-3 h-3"
-                                        :class="
-                                            i <=
-                                            Math.round(
-                                                related.reviews_avg_rating || 0
-                                            )
-                                                ? 'text-yellow-400'
-                                                : 'text-gray-700'
-                                        "
-                                    />
-                                </div>
-                                <span class="text-[10px] text-gray-500 ml-1"
-                                    >({{ related.reviews_count || 0 }})</span
-                                >
-                            </div>
-
                             <div
                                 class="mt-auto flex items-center justify-between border-t border-white/5 pt-4"
                             >

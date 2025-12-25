@@ -10,6 +10,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -89,5 +90,24 @@ Route::get('/api/search', [HomeController::class, 'search'])->name('api.search')
 
 // Track Order Page
 Route::match(['get', 'post'], '/track-order', [HomeController::class, 'trackOrder'])->name('track.order');
+
+Route::get('/offers', function () {
+    return Inertia::render('Offers');
+})->name('offers.index');
+
+// Contact Page View
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+})->name('contact.index');
+
+// Form Submission
+Route::post('/contact-send', [ContactController::class, 'send'])->name('contact.send');
+
+// Vendor Registration Routes
+Route::get('/become-a-vendor', function () {
+    return Inertia::render('VendorRegister');
+})->name('vendor.register');
+
+Route::post('/vendor-store', [VendorController::class, 'store'])->name('vendor.store');
 
 require __DIR__.'/auth.php';
