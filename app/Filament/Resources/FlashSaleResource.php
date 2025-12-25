@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\FlashSaleResource\Pages;
+use App\Filament\Resources\FlashSaleResource\RelationManagers;
+use App\Models\FlashSale;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class FlashSaleResource extends Resource
+{
+    protected static ?string $model = FlashSale::class;
+    protected static ?string $navigationIcon = 'heroicon-o-bolt';
+    protected static ?string $navigationGroup = 'Marketing';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Campaign Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('title')
+                            ->required()
+                            ->maxLength(255),
+
+                        Forms\Components\Toggle::make('status')
+                            ->label('Active')
+                            ->default(true)
+                            ->required(),
+
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\DateTimePicker::make('start_time')
+                                    ->required(),
+                                Forms\Components\DateTimePicker::make('end_time')
+                                    ->required()
+                                    ->after('start_time'),
+                            ]),
+
+                        Forms\Components\FileUpload::make('banner_image')
+                            ->image()
+                            ->directory('flash_sales')
+                            ->columnSpanFull(),
+                    ])
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable(),
+                Tables\Columns\IconColumn::make('status')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end_time')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->counts('products')
+                    ->label('Items'),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ProductsRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListFlashSales::route('/'),
+            'create' => Pages\CreateFlashSale::route('/create'),
+            'edit' => Pages\EditFlashSale::route('/{record}/edit'),
+        ];
+    }
+}

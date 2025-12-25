@@ -19,6 +19,7 @@ import Testimonials from "@/Components/Sections/Testimonials.vue";
 import FAQSection from "@/Components/Sections/FAQSection.vue";
 import ActivePromos from "@/Components/Sections/ActivePromos.vue";
 import PromoPopup from "@/Components/Popups/PromoPopup.vue";
+import RecentlyViewed from "@/Components/Sections/RecentlyViewed.vue";
 
 // --- Icons ---
 import {
@@ -26,13 +27,15 @@ import {
     XMarkIcon,
     HeartIcon,
 } from "@heroicons/vue/24/outline";
-import RecentlyViewed from "@/Components/Sections/RecentlyViewed.vue";
 
-// --- Props ---
+// --- Props (Updated based on HomeController) ---
 const props = defineProps({
-    products: Array,
     slides: Array,
     categories: Array,
+    newArrivals: Array, // ✅ New
+    topRated: Array, // ✅ New
+    bestSellers: Array, // ✅ New
+    flashSale: Object, // ✅ New (Can be null)
 });
 
 // --- 🔔 Toast Logic ---
@@ -103,22 +106,22 @@ const showToast = (message, type = "success") => {
         <CategoryMenu :categories="categories" />
         <HeroSlider :slides="slides" />
 
-        <FlashSaleSection :products="products" />
+        <FlashSaleSection v-if="flashSale" :saleData="flashSale" />
 
         <ServiceFeatures />
         <BrandMarquee />
 
         <div class="bg-[#0B0F19] pt-10 pb-4">
             <div class="container mx-auto px-4 lg:px-8 space-y-24">
-                <NewArrivals :products="products" />
+                <NewArrivals :products="newArrivals" />
 
                 <ActivePromos />
 
-                <BestSellers :products="products" />
+                <BestSellers :products="bestSellers" />
 
                 <PromoBanner />
 
-                <TopRated :products="products" />
+                <TopRated :products="topRated" />
 
                 <Testimonials />
                 <FAQSection />

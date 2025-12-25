@@ -65,4 +65,13 @@ class Product extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function flashSales()
+{
+    return $this->belongsToMany(FlashSale::class, 'flash_sale_product')
+                ->withPivot('discount_price', 'stock_limit')
+                ->withTimestamps();
+}
+
+
 }

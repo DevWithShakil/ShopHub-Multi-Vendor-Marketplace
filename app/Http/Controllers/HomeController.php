@@ -6,14 +6,16 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Slider;
+use App\Models\FlashSale;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // 1. Fetch Dynamic Sliders from Database
+        // 1. Fetch Dynamic Sliders
         $slides = Slider::with('product')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
@@ -46,7 +48,87 @@ class HomeController extends Controller
                 ];
             });
 
-        // 2. Fetch Products with Root Category Logic
+        // 2. Hierarchical Categories
+        $categories = Category::whereNull('parent_id')
+            ->with([
+                'children' => function($q) {
+                    $q->select('id', 'name', 'parent_id', 'slug')
+                      ->with(['children' => function($q2) {
+                          $q2->select('id', 'name', 'parent_id', 'slug')
+                             ->with(['children' => function($q3) {
+                                 $q3->select('id', 'name', 'parent_id', 'slug');
+                             }]);
+                      }]);
+                }
+            ])
+            ->select('id', 'name', 'slug')
+            ->get();
+
+        // 3. New Arrivals
+        $newArrivals = Product::with('category')
+            ->where('is_active', true)
+            ->where('approval_status', 'approved')
+            ->withAvg('reviews as reviews_avg_rating', 'rating')
+            ->withCount('reviews')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        // 4. Top Rated (Fix for PostgreSQL Error)
+        $topRated = Product::with('category')
+            ->where('is_active', true)
+            ->where('approval_status', 'approved')
+            ->withCount('reviews')
+            ->withAvg('reviews as reviews_avg_rating', 'rating')
+            ->whereHas('reviews') // ✅ Fix: অন্তত ১টি রিভিউ থাকতে হবে (নাহলে NULL উপরে চলে আসবে)
+            // ->having('reviews_avg_rating', '>=', 4) // ❌ Removed: এটি পোস্টগ্রেএসকিউএল-এ এরর দেয়
+            ->orderByDesc('reviews_avg_rating') // ✅ Fix: সরাসরি অর্ডার করলে টপ রেটেড গুলোই আসবে
+            ->take(8)
+            ->get();
+
+        // 5. Best Sellers
+        $bestSellers = Product::select('products.*', DB::raw('SUM(order_items.quantity) as total_sold'))
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.status', 'delivered')
+            ->where('products.is_active', true)
+            ->where('products.approval_status', 'approved')
+            ->groupBy('products.id')
+            ->with('category')
+            ->withAvg('reviews as reviews_avg_rating', 'rating')
+            ->withCount('reviews')
+            ->orderByDesc('total_sold')
+            ->take(8)
+            ->get();
+
+        // Fallback if no sales data
+        if ($bestSellers->isEmpty()) {
+            $bestSellers = Product::where('is_active', true)
+                ->where('approval_status', 'approved')
+                ->with('category')
+                ->withAvg('reviews as reviews_avg_rating', 'rating')
+                ->withCount('reviews')
+                ->inRandomOrder()
+                ->take(8)
+                ->get();
+        }
+
+        // 6. Active Flash Sale
+        $flashSale = FlashSale::with(['products' => function($query) {
+                $query->where('is_active', true)
+                      ->where('approval_status', 'approved')
+                      ->with('category')
+                      ->withAvg('reviews as reviews_avg_rating', 'rating')
+                      ->withCount('reviews')
+                      ->take(10);
+            }])
+            ->where('status', true)
+            ->where('start_time', '<=', now())
+            ->where('end_time', '>=', now())
+            ->latest()
+            ->first();
+
+        // 7. General Products (For Category Grouping if needed)
         // We load parent relationships up to 3 levels deep to find the root category
         $products = Product::with(['category.parent.parent'])
             ->where('is_active', true)
@@ -54,10 +136,10 @@ class HomeController extends Controller
             ->withAvg('reviews as reviews_avg_rating', 'rating')
             ->withCount('reviews')
             ->latest()
-            ->take(100) // Increased limit to ensure we have enough products for grouping
+            ->take(50) // Reduced limit for optimization
             ->get()
             ->map(function ($product) {
-                // 🔥 Logic to find the Root/Mother Category
+                // Logic to find the Root/Mother Category
                 $rootCategory = $product->category;
                 while ($rootCategory && $rootCategory->parent) {
                     $rootCategory = $rootCategory->parent;
@@ -70,8 +152,8 @@ class HomeController extends Controller
                     'base_price' => $product->base_price,
                     'discount_price' => $product->discount_price,
                     'thumb_image' => $product->thumb_image,
-                    'category' => $product->category, // Original category for display on card
-                    'root_category' => $rootCategory ? [ // ✅ Mother Category for Grouping
+                    'category' => $product->category,
+                    'root_category' => $rootCategory ? [
                         'name' => $rootCategory->name,
                         'slug' => $rootCategory->slug
                     ] : null,
@@ -81,27 +163,14 @@ class HomeController extends Controller
                 ];
             });
 
-        // 3. Hierarchical Categories (Parent -> Children -> GrandChildren -> GreatGrandChildren)
-        // This is for the Mega Menu
-        $categories = Category::whereNull('parent_id') // Level 1 (Mother)
-            ->with([
-                'children' => function($q) { // Level 2
-                    $q->select('id', 'name', 'parent_id', 'slug')
-                      ->with(['children' => function($q2) { // Level 3
-                          $q2->select('id', 'name', 'parent_id', 'slug')
-                             ->with(['children' => function($q3) { // Level 4
-                                 $q3->select('id', 'name', 'parent_id', 'slug');
-                             }]);
-                      }]);
-                }
-            ])
-            ->select('id', 'name', 'slug')
-            ->get();
-
         return Inertia::render('Home', [
-            'products' => $products,
             'slides' => $slides,
             'categories' => $categories,
+            'newArrivals' => $newArrivals,
+            'topRated' => $topRated,
+            'bestSellers' => $bestSellers,
+            'flashSale' => $flashSale,
+            'products' => $products, // General list for grouping logic
         ]);
     }
 
@@ -110,9 +179,10 @@ class HomeController extends Controller
         if (!$query) return response()->json([]);
 
         $products = Product::with('category')->where('is_active', true)
+            ->where('approval_status', 'approved')
             ->where(function ($q) use ($query) {
-                $q->whereRaw("LOWER(name->>'en') LIKE ?", ['%' . strtolower($query) . '%'])
-                  ->orWhereRaw("LOWER(name->>'bn') LIKE ?", ['%' . strtolower($query) . '%']);
+                $q->where('name', 'like', '%' . $query . '%')
+                  ->orWhereRaw("LOWER(name) LIKE ?", ['%' . strtolower($query) . '%']);
             })->take(5)->get()->map(function ($p) {
                 return [
                     'name' => $p->name,
