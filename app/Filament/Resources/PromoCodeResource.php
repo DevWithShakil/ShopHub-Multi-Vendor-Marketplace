@@ -30,67 +30,79 @@ class PromoCodeResource extends Resource
         return $query;
     }
 
-   public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Forms\Components\Section::make('Coupon Details')->schema([
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Coupon Details')->schema([
 
-                Forms\Components\Select::make('vendor_id')
-                    ->label('Specific Vendor (Optional)')
-                    ->relationship('vendor', 'shop_name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('Global Coupon (All Shops)')
-                    ->visible(fn () => auth()->user()->role === 'admin')
-                    ->columnSpanFull(),
+                    Forms\Components\Select::make('vendor_id')
+                        ->label('Specific Vendor (Optional)')
+                        ->relationship('vendor', 'shop_name')
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('Global Coupon (All Shops)')
+                        ->visible(fn () => auth()->user()->role === 'admin')
+                        ->columnSpanFull(),
 
+                    Forms\Components\TextInput::make('code')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->label('Coupon Code')
+                        ->placeholder('e.g. SUMMER25')
+                        ->extraInputAttributes(['style' => 'text-transform: uppercase'])
+                        ->dehydrateStateUsing(fn (string $state): string => strtoupper($state)),
 
-                Forms\Components\TextInput::make('code')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->label('Coupon Code')
-                    ->placeholder('e.g. SUMMER25')
-                    ->extraInputAttributes(['style' => 'text-transform: uppercase'])
-                    ->dehydrateStateUsing(fn (string $state): string => strtoupper($state)),
+                    Forms\Components\Select::make('type')
+                        ->options([
+                            'fixed' => 'Fixed Amount (৳)',
+                            'percentage' => 'Percentage (%)',
+                        ])
+                        ->required()
+                        ->default('fixed')
+                        ->live(), // লাইভ আপডেট যাতে প্রিফিক্স চেঞ্জ হয়
 
-                Forms\Components\Select::make('type')
-                    ->options([
-                        'fixed' => 'Fixed Amount (৳)',
-                        'percentage' => 'Percentage (%)',
-                    ])
-                    ->required()
-                    ->default('fixed'),
+                    Forms\Components\TextInput::make('value')
+                        ->numeric()
+                        ->required()
+                        ->label('Discount Value')
+                        ->prefix(fn (Forms\Get $get) => $get('type') === 'percentage' ? '%' : '৳'),
 
-                Forms\Components\TextInput::make('value')
-                    ->numeric()
-                    ->required()
-                    ->label('Discount Value')
-                    ->prefix(fn (Forms\Get $get) => $get('type') === 'percentage' ? '%' : '৳'),
+                    Forms\Components\TextInput::make('min_order_amount')
+                        ->numeric()
+                        ->label('Min. Order Amount (Optional)')
+                        ->prefix('৳'),
 
-                Forms\Components\TextInput::make('min_order_amount')
-                    ->numeric()
-                    ->label('Min. Order Amount (Optional)')
-                    ->prefix('৳'),
+                    Forms\Components\TextInput::make('max_discount_amount')
+                        ->numeric()
+                        ->label('Max Discount Amount (Optional)')
+                        ->prefix('৳')
+                        ->visible(fn (Forms\Get $get) => $get('type') === 'percentage'),
 
-                Forms\Components\DatePicker::make('starts_at')
-                    ->label('Start Date'),
+                    // ✅ DateTimePicker ব্যবহার করা হয়েছে (Date + Time)
+                    Forms\Components\DateTimePicker::make('start_date') // Model attribute name check করুন
+                        ->label('Start Date & Time')
+                        ->required()
+                        ->seconds(false),
 
-                Forms\Components\DatePicker::make('expires_at')
-                    ->label('Expiry Date'),
+                    Forms\Components\DateTimePicker::make('end_date') // Model attribute name check করুন
+                        ->label('Expiry Date & Time')
+                        ->required()
+                        ->after('start_date')
+                        ->seconds(false),
 
-                Forms\Components\TextInput::make('usage_limit')
-                    ->numeric()
-                    ->label('Usage Limit (Optional)'),
+                    Forms\Components\TextInput::make('usage_limit')
+                        ->numeric()
+                        ->label('Usage Limit (Optional)'),
 
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Active Status')
-                    ->default(true)
-                    ->onColor('success')
-                    ->offColor('danger'),
-            ])->columns(2),
-        ]);
-}
+                    Forms\Components\Toggle::make('is_active')
+                        ->label('Active Status')
+                        ->default(true)
+                        ->onColor('success')
+                        ->offColor('danger'),
+                ])->columns(2),
+            ]);
+    }
 
     public static function table(Table $table): Table
     {
@@ -137,9 +149,10 @@ class PromoCodeResource extends Resource
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active'),
 
-                Tables\Columns\TextColumn::make('expires_at')
+                // ✅ Date Column Updates
+                Tables\Columns\TextColumn::make('end_date')
                     ->label('Expires')
-                    ->date()
+                    ->dateTime('d M, Y h:i A') // সময় সহ ফরম্যাট
                     ->sortable()
                     ->placeholder('Never'),
             ])

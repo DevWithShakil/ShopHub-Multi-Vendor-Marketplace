@@ -31,40 +31,46 @@ const appliedCoupon = computed(() => page.props.coupon || null);
 
 // ✅ Toast Logic
 const toastMessage = ref(null);
-const toastType = ref("success"); // success | info | error
+const toastType = ref("success");
 
 const showToast = (message, type = "success") => {
     toastMessage.value = message;
     toastType.value = type;
     setTimeout(() => {
         toastMessage.value = null;
-    }, 3000);
+    }, 4000); // 4 seconds for better readability of long messages
 };
 
-// ✅ Handle Coupon Apply
+// ✅ Handle Coupon Apply (Updated for Flash Sale & Vendor Logic)
 const applyCoupon = () => {
     couponForm.clearErrors();
 
     couponForm
         .transform((data) => ({
-            ...data,
-            subtotal: cartStore.totalPrice,
-            cart_items: cartStore.items.map((item) => ({
-                product_id: item.id,
-                vendor_id: item.vendor_id,
+            code: data.code,
+            // ✅ Backend validation এর জন্য সম্পূর্ণ ডেটা পাঠানো হচ্ছে
+            items: cartStore.items.map((item) => ({
+                id: item.id,
                 price: item.price,
                 quantity: item.quantity,
+                vendor_id: item.vendor_id, // Controller-এ ভেন্ডর চেক করার জন্য এটি প্রয়োজন
             })),
         }))
         .post(route("coupon.apply"), {
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 couponForm.reset();
-                showToast("Coupon applied successfully!", "success");
+                // ব্যাকএন্ড থেকে আসা ডাইনামিক মেসেজ টোস্টে দেখান
+                const flashMsg = page.props.flash.success;
+                showToast(
+                    flashMsg || "Coupon applied successfully!",
+                    "success"
+                );
             },
             onError: (errors) => {
-                // ❌ টোস্ট রিমুভ করা হয়েছে, শুধু ইনপুটের নিচে এরর সেট করা হবে
-                if (!couponForm.errors.code) {
+                // ইনপুটের নিচে অটোমেটিক এরর দেখাবে (couponForm.errors.code)
+                // যদি কোনো কারণে code ফিল্ডে এরর না আসে, তখন ম্যানুয়ালি সেট করা হবে
+                if (!errors.code) {
                     couponForm.setError("code", "Invalid coupon or expired");
                 }
             },
@@ -137,7 +143,7 @@ const getLocalizedName = (name) => {
     >
         <div
             v-if="toastMessage"
-            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            class="fixed bottom-6 right-6 z-[100] max-w-md w-full border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
             :class="{
                 'bg-[#1A1F2E] border-green-500/20 border-l-green-500':
                     toastType === 'success',
@@ -166,7 +172,6 @@ const getLocalizedName = (name) => {
                 />
                 <XCircleIcon v-else class="w-6 h-6 text-red-400" />
             </div>
-
             <div class="flex-1">
                 <h4 class="font-bold text-sm tracking-wide text-white">
                     {{
@@ -188,7 +193,6 @@ const getLocalizedName = (name) => {
                     {{ toastMessage }}
                 </p>
             </div>
-
             <button
                 @click="toastMessage = null"
                 class="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition"
@@ -478,6 +482,7 @@ const getLocalizedName = (name) => {
                                             }}</span>
                                         </button>
                                     </div>
+
                                     <p
                                         v-if="couponForm.errors.code"
                                         class="text-rose-400 text-xs mt-2 flex items-center gap-1 animate-pulse"
