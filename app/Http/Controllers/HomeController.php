@@ -9,6 +9,7 @@ use App\Models\Slider;
 use App\Models\FlashSale;
 use App\Models\Brand;
 use App\Models\Testimonial;
+use App\Models\PromoCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -140,9 +141,27 @@ class HomeController extends Controller
         // 9. Testimonials Logic Added Here
         $testimonials = Testimonial::where('is_active', true)
             ->latest()
-            ->take(6) // Fetch latest 6 active testimonials
+            ->take(6)
             ->get();
 
+        // Active Promos (Coupons)
+        $activePromos = PromoCode::with('vendor')
+            ->where('is_active', true)
+            ->whereDate('end_date', '>=', now())
+            ->latest()
+            // ->take(4)
+            ->get()
+            ->map(function ($promo) {
+                return [
+                    'id' => $promo->id,
+                    'code' => $promo->code,
+                    'type' => $promo->type,
+                    'value' => $promo->value,
+                    'vendor_name' => $promo->vendor ? $promo->vendor->shop_name : 'Global',
+                    'vendor_logo' => $promo->vendor ? asset('storage/'.$promo->vendor->logo) : null,
+                    'expires_at' => $promo->end_date,
+                ];
+            });
         return Inertia::render('Home', [
             'slides' => $slides,
             'categories' => $categories,
@@ -152,7 +171,8 @@ class HomeController extends Controller
             'flashSale' => $flashSale,
             'products' => $products,
             'brands' => $brands,
-            'testimonials' => $testimonials, // Passing testimonials to frontend
+            'testimonials' => $testimonials,
+            'activePromos' => $activePromos,
         ]);
     }
 
@@ -179,6 +199,8 @@ class HomeController extends Controller
 
         return response()->json($products);
     }
+
+
 
     public function trackOrder(Request $request)
     {

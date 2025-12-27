@@ -26,7 +26,7 @@ import {
     HeartIcon,
 } from "@heroicons/vue/24/outline";
 
-// --- Props (Updated to include 'testimonials') ---
+// --- Props ---
 const props = defineProps({
     slides: Array,
     categories: Array,
@@ -35,7 +35,8 @@ const props = defineProps({
     bestSellers: Array,
     flashSale: Object,
     brands: Array,
-    testimonials: Array, // ✅ Added missing prop
+    testimonials: Array,
+    activePromos: Array, // ✅ ১. এই লাইনটি যোগ করতে হবে
 });
 
 // --- 🔔 Toast Logic ---
@@ -116,7 +117,7 @@ const showToast = (message, type = "success") => {
             <div class="container mx-auto px-4 lg:px-8 space-y-24">
                 <NewArrivals :products="newArrivals" />
 
-                <ActivePromos />
+                <ActivePromos :promos="activePromos" />
 
                 <BestSellers :products="bestSellers" />
 
