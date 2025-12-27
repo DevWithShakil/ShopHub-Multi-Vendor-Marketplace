@@ -18,23 +18,32 @@ const props = defineProps({
 const page = usePage();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
-const toastMessage = ref(null);
 
+// ✅ FIX: Robust Localized Name Helper
 const getLocalizedName = (nameField) => {
+    if (!nameField) return "General";
+
     try {
+        // Case 1: nameField is already an object (Laravel casted it)
+        if (typeof nameField === "object") {
+            return nameField[page.props.locale] || nameField["en"] || "Unknown";
+        }
+
+        // Case 2: nameField is a JSON string
         if (typeof nameField === "string" && nameField.startsWith("{")) {
             const parsed = JSON.parse(nameField);
             return parsed[page.props.locale] || parsed["en"] || "Unknown";
         }
-        return nameField || "General";
-    } catch (e) {
+
+        // Case 3: nameField is a simple string
         return nameField;
+    } catch (e) {
+        return nameField; // Fallback to raw string if parsing fails
     }
 };
 
 const addToCart = () => {
     cartStore.addToCart(props.product, 1);
-    // Note: Parent component should handle toast ideally, but simple store action is fine here
 };
 </script>
 
@@ -97,6 +106,7 @@ const addToCart = () => {
             >
                 {{ getLocalizedName(product.category?.name) }}
             </p>
+
             <Link :href="route('product.details', product.slug)">
                 <h3
                     class="font-bold text-base text-white leading-snug group-hover:text-indigo-400 transition-colors mb-3 line-clamp-2 min-h-[3rem]"

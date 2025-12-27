@@ -9,22 +9,10 @@ const props = defineProps({
     },
 });
 
-// ✅ ১. ডিবাগিং (কনসোলে চেক করার জন্য)
-onMounted(() => {
-    console.log("Brands Data:", props.brands);
-});
-
-// ✅ ২. ইমেজ পাথ জেনারেটর (Bulletproof Logic)
 const getBrandLogo = (logoPath) => {
     if (!logoPath) return null;
-
-    // যদি ফুল URL থাকে (S3 বা রিমোট স্টোরেজ)
     if (logoPath.startsWith("http")) return logoPath;
-
-    // স্ল্যাশ ক্লিন করা (যাতে ডাবল স্ল্যাশ না হয়)
     const cleanPath = logoPath.replace(/^\/+/, "");
-
-    // সঠিক পাথ রিটার্ন করা
     return `/storage/${cleanPath}`;
 };
 </script>

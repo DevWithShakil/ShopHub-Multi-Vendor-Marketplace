@@ -1,19 +1,19 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import {
     ClockIcon,
     ArrowRightIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
-} from "@heroicons/vue/24/solid"; // Solid Icons for impact
+} from "@heroicons/vue/24/solid";
 import ProductCard from "@/Components/ProductCard.vue";
 
-const props = defineProps({ products: Array });
-
-// Logic: Sort by ID descending (Latest first)
-const newArrivals = computed(() => {
-    return [...props.products].sort((a, b) => b.id - a.id).slice(0, 8);
+const props = defineProps({
+    products: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // --- 🔄 Scroll Logic ---
@@ -33,7 +33,10 @@ const scrollRight = () => {
 </script>
 
 <template>
-    <section class="py-16 relative overflow-hidden bg-[#0B0F19]">
+    <section
+        v-if="products.length > 0"
+        class="py-16 relative overflow-hidden bg-[#0B0F19]"
+    >
         <div
             class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"
         ></div>
@@ -112,12 +115,12 @@ const scrollRight = () => {
                     class="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-8 px-2 snap-x snap-mandatory"
                 >
                     <ProductCard
-                        v-for="product in newArrivals"
+                        v-for="product in products"
                         :key="product.id"
                         :product="product"
                         badge="New"
                         badgeColor="bg-gradient-to-r from-emerald-500 to-teal-500"
-                        class="snap-start border-emerald-500/10 hover:border-emerald-500/40"
+                        class="snap-start border-emerald-500/10 hover:border-emerald-500/40 min-w-[280px]"
                     />
                 </div>
             </div>
@@ -135,7 +138,6 @@ const scrollRight = () => {
 </template>
 
 <style scoped>
-/* Hide Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
