@@ -1,8 +1,6 @@
 <script setup>
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Head } from "@inertiajs/vue3";
 import { ref } from "vue";
-import { useCartStore } from "@/Stores/cartStore";
-import { useWishlistStore } from "@/Stores/wishlistStore";
 
 // --- Layout & Components ---
 import MainLayout from "@/Layouts/MainLayout.vue";
@@ -28,17 +26,18 @@ import {
     HeartIcon,
 } from "@heroicons/vue/24/outline";
 
-// --- Props (Updated based on HomeController) ---
+// --- Props ---
 const props = defineProps({
     slides: Array,
     categories: Array,
-    newArrivals: Array, // ✅ New
-    topRated: Array, // ✅ New
-    bestSellers: Array, // ✅ New
-    flashSale: Object, // ✅ New (Can be null)
+    newArrivals: Array,
+    topRated: Array,
+    bestSellers: Array,
+    flashSale: Object,
+    brands: Array, // ✅ New Prop for Brands
 });
 
-// --- 🔔 Toast Logic ---
+// --- 🔔 Toast Logic (Optional if using MainLayout Global Toast) ---
 const toastMessage = ref(null);
 const toastType = ref("success");
 
@@ -109,7 +108,8 @@ const showToast = (message, type = "success") => {
         <FlashSaleSection v-if="flashSale" :saleData="flashSale" />
 
         <ServiceFeatures />
-        <BrandMarquee />
+
+        <BrandMarquee :brands="brands" />
 
         <div class="bg-[#0B0F19] pt-10 pb-4">
             <div class="container mx-auto px-4 lg:px-8 space-y-24">

@@ -7,9 +7,11 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Slider;
 use App\Models\FlashSale;
+use App\Models\Brand; // ✅ Brand মডেল ইমপোর্ট করা হলো
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -50,17 +52,7 @@ class HomeController extends Controller
 
         // 2. Hierarchical Categories
         $categories = Category::whereNull('parent_id')
-            ->with([
-                'children' => function($q) {
-                    $q->select('id', 'name', 'parent_id', 'slug')
-                      ->with(['children' => function($q2) {
-                          $q2->select('id', 'name', 'parent_id', 'slug')
-                             ->with(['children' => function($q3) {
-                                 $q3->select('id', 'name', 'parent_id', 'slug');
-                             }]);
-                      }]);
-                }
-            ])
+            ->with(['children.children.children']) // Simplified recursive loading
             ->select('id', 'name', 'slug')
             ->get();
 
@@ -74,15 +66,14 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        // 4. Top Rated (Fix for PostgreSQL Error)
+        // 4. Top Rated
         $topRated = Product::with('category')
             ->where('is_active', true)
             ->where('approval_status', 'approved')
             ->withCount('reviews')
             ->withAvg('reviews as reviews_avg_rating', 'rating')
-            ->whereHas('reviews') // ✅ Fix: অন্তত ১টি রিভিউ থাকতে হবে (নাহলে NULL উপরে চলে আসবে)
-            // ->having('reviews_avg_rating', '>=', 4) // ❌ Removed: এটি পোস্টগ্রেএসকিউএল-এ এরর দেয়
-            ->orderByDesc('reviews_avg_rating') // ✅ Fix: সরাসরি অর্ডার করলে টপ রেটেড গুলোই আসবে
+            ->whereHas('reviews')
+            ->orderByDesc('reviews_avg_rating')
             ->take(8)
             ->get();
 
@@ -101,7 +92,6 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        // Fallback if no sales data
         if ($bestSellers->isEmpty()) {
             $bestSellers = Product::where('is_active', true)
                 ->where('approval_status', 'approved')
@@ -118,33 +108,38 @@ class HomeController extends Controller
                 $query->where('is_active', true)
                       ->where('approval_status', 'approved')
                       ->with('category')
+                      ->withPivot('discount_price', 'stock_limit', 'sold')
                       ->withAvg('reviews as reviews_avg_rating', 'rating')
                       ->withCount('reviews')
                       ->take(10);
             }])
             ->where('status', true)
-            ->where('start_time', '<=', now())
-            ->where('end_time', '>=', now())
+            ->where('start_time', '<=', Carbon::now())
+            ->where('end_time', '>=', Carbon::now())
             ->latest()
             ->first();
 
-        // 7. General Products (For Category Grouping if needed)
-        // We load parent relationships up to 3 levels deep to find the root category
+        // 7. Brands Fetching
+        $brands = Brand::where('is_active', true)
+            ->select('id', 'name', 'logo')
+            ->latest()
+            ->take(20)
+            ->get();
+
+        // 8. General Products
         $products = Product::with(['category.parent.parent'])
             ->where('is_active', true)
             ->where('approval_status', 'approved')
             ->withAvg('reviews as reviews_avg_rating', 'rating')
             ->withCount('reviews')
             ->latest()
-            ->take(50) // Reduced limit for optimization
+            ->take(50)
             ->get()
             ->map(function ($product) {
-                // Logic to find the Root/Mother Category
                 $rootCategory = $product->category;
                 while ($rootCategory && $rootCategory->parent) {
                     $rootCategory = $rootCategory->parent;
                 }
-
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -153,10 +148,7 @@ class HomeController extends Controller
                     'discount_price' => $product->discount_price,
                     'thumb_image' => $product->thumb_image,
                     'category' => $product->category,
-                    'root_category' => $rootCategory ? [
-                        'name' => $rootCategory->name,
-                        'slug' => $rootCategory->slug
-                    ] : null,
+                    'root_category' => $rootCategory ? ['name' => $rootCategory->name, 'slug' => $rootCategory->slug] : null,
                     'reviews_avg_rating' => $product->reviews_avg_rating,
                     'reviews_count' => $product->reviews_count,
                     'vendor_id' => $product->vendor_id,
@@ -170,7 +162,8 @@ class HomeController extends Controller
             'topRated' => $topRated,
             'bestSellers' => $bestSellers,
             'flashSale' => $flashSale,
-            'products' => $products, // General list for grouping logic
+            'products' => $products,
+            'brands' => $brands,
         ]);
     }
 
@@ -178,7 +171,8 @@ class HomeController extends Controller
         $query = $request->input('query');
         if (!$query) return response()->json([]);
 
-        $products = Product::with('category')->where('is_active', true)
+        $products = Product::with('category')
+            ->where('is_active', true)
             ->where('approval_status', 'approved')
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', '%' . $query . '%')
@@ -198,23 +192,19 @@ class HomeController extends Controller
     }
 
     public function trackOrder(Request $request)
-{
-    // ১. ইনপুট নেওয়া (GET বা POST যেভাবেই আসুক)
-    $invoice_no = $request->input('invoice_no');
+    {
+        $invoice_no = $request->input('invoice_no');
+        $order = null;
 
-    $order = null;
+        if ($invoice_no) {
+            $order = Order::with(['items.product'])
+                ->where('invoice_no', $invoice_no)
+                ->first();
+        }
 
-    // ২. যদি ইনভয়েস নম্বর থাকে, তবে অর্ডার খুঁজবে
-    if ($invoice_no) {
-        $order = Order::with(['items.product'])
-            ->where('invoice_no', $invoice_no)
-            ->first();
+        return Inertia::render('TrackOrder', [
+            'order' => $order,
+            'filters' => ['invoice_no' => $invoice_no]
+        ]);
     }
-
-    // ৩. ভিউ রিটার্ন করা (অর্ডার পাওয়া গেলে ডাটা সহ, না হলে খালি)
-    return Inertia::render('TrackOrder', [
-        'order' => $order,
-        'filters' => ['invoice_no' => $invoice_no]
-    ]);
-}
 }

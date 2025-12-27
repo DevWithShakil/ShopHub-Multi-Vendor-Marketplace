@@ -1,16 +1,44 @@
 <script setup>
+import { onMounted } from "vue";
 import { BuildingStorefrontIcon } from "@heroicons/vue/24/solid";
+
+const props = defineProps({
+    brands: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+// ✅ ১. ডিবাগিং (কনসোলে চেক করার জন্য)
+onMounted(() => {
+    console.log("Brands Data:", props.brands);
+});
+
+// ✅ ২. ইমেজ পাথ জেনারেটর (Bulletproof Logic)
+const getBrandLogo = (logoPath) => {
+    if (!logoPath) return null;
+
+    // যদি ফুল URL থাকে (S3 বা রিমোট স্টোরেজ)
+    if (logoPath.startsWith("http")) return logoPath;
+
+    // স্ল্যাশ ক্লিন করা (যাতে ডাবল স্ল্যাশ না হয়)
+    const cleanPath = logoPath.replace(/^\/+/, "");
+
+    // সঠিক পাথ রিটার্ন করা
+    return `/storage/${cleanPath}`;
+};
 </script>
 
 <template>
     <section
+        v-if="brands && brands.length > 0"
         class="py-16 border-y border-white/5 bg-[#0B0F19] overflow-hidden relative"
     >
         <div
             class="absolute inset-0 bg-indigo-500/5 blur-[100px] pointer-events-none"
         ></div>
 
-        <div class="container mx-auto px-4 mb-12 text-center relative z-10">
+        <div class="container mx-auto px-4 mb-14 text-center relative z-10">
             <div
                 class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-3 shadow-lg"
             >
@@ -29,28 +57,78 @@ import { BuildingStorefrontIcon } from "@heroicons/vue/24/solid";
 
         <div class="relative w-full">
             <div
-                class="absolute inset-0 pointer-events-none z-10 bg-gradient-to-r from-[#0B0F19] via-transparent to-[#0B0F19]"
+                class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0B0F19] to-transparent z-10 pointer-events-none"
+            ></div>
+            <div
+                class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0B0F19] to-transparent z-10 pointer-events-none"
             ></div>
 
             <div class="flex overflow-x-hidden group">
                 <div
-                    class="animate-marquee whitespace-nowrap flex gap-20 items-center group-hover:pause"
+                    class="animate-marquee whitespace-nowrap flex gap-16 items-center group-hover:pause"
                 >
-                    <span
-                        v-for="i in 10"
-                        :key="i"
-                        class="text-4xl md:text-5xl font-black text-transparent stroke-text uppercase hover:text-indigo-500 hover:stroke-0 transition-all duration-300 cursor-pointer opacity-30 hover:opacity-100 select-none"
+                    <div
+                        v-for="brand in brands"
+                        :key="brand.id"
+                        class="flex items-center gap-4 group/item cursor-pointer select-none"
                     >
-                        BRANDNAME {{ i }}
-                    </span>
+                        <div
+                            class="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 border border-white/10 shadow-lg group-hover/item:scale-110 transition-all duration-300 overflow-hidden"
+                        >
+                            <img
+                                v-if="brand.logo"
+                                :src="getBrandLogo(brand.logo)"
+                                :alt="brand.name"
+                                class="w-full h-full object-contain"
+                                @error="
+                                    $event.target.src =
+                                        'https://placehold.co/100x100?text=No+Img'
+                                "
+                            />
 
-                    <span
-                        v-for="i in 10"
-                        :key="'dup' + i"
-                        class="text-4xl md:text-5xl font-black text-transparent stroke-text uppercase hover:text-indigo-500 hover:stroke-0 transition-all duration-300 cursor-pointer opacity-30 hover:opacity-100 select-none"
+                            <BuildingStorefrontIcon
+                                v-else
+                                class="w-8 h-8 text-gray-400"
+                            />
+                        </div>
+
+                        <span
+                            class="text-2xl font-black text-transparent stroke-text uppercase group-hover/item:stroke-0 group-hover/item:text-white transition-all duration-300"
+                        >
+                            {{ brand.name }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-for="brand in brands"
+                        :key="'dup' + brand.id"
+                        class="flex items-center gap-4 group/item cursor-pointer select-none"
                     >
-                        BRANDNAME {{ i }}
-                    </span>
+                        <div
+                            class="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 border border-white/10 shadow-lg group-hover/item:scale-110 transition-all duration-300 overflow-hidden"
+                        >
+                            <img
+                                v-if="brand.logo"
+                                :src="getBrandLogo(brand.logo)"
+                                :alt="brand.name"
+                                class="w-full h-full object-contain"
+                                @error="
+                                    $event.target.src =
+                                        'https://placehold.co/100x100?text=No+Img'
+                                "
+                            />
+                            <BuildingStorefrontIcon
+                                v-else
+                                class="w-8 h-8 text-gray-400"
+                            />
+                        </div>
+
+                        <span
+                            class="text-2xl font-black text-transparent stroke-text uppercase group-hover/item:stroke-0 group-hover/item:text-white transition-all duration-300"
+                        >
+                            {{ brand.name }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,16 +136,12 @@ import { BuildingStorefrontIcon } from "@heroicons/vue/24/solid";
 </template>
 
 <style scoped>
-/* 🔥 Slow & Smooth Animation */
 .animate-marquee {
-    animation: marquee 50s linear infinite; /* Slowed down to 50s */
+    animation: marquee 40s linear infinite;
 }
-
-/* Pause on Hover */
 .group-hover\:pause:hover {
     animation-play-state: paused;
 }
-
 @keyframes marquee {
     0% {
         transform: translateX(0);
@@ -76,15 +150,13 @@ import { BuildingStorefrontIcon } from "@heroicons/vue/24/solid";
         transform: translateX(-50%);
     }
 }
-
-/* 🔥 Text Stroke Effect (Outline Text) */
 .stroke-text {
-    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.2);
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
     color: transparent;
 }
-.stroke-text:hover {
+.group-hover\/item\:text-white {
     -webkit-text-stroke: 0px;
-    color: #818cf8; /* Indigo-400 */
-    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5); /* Glow effect on hover */
+    color: #ffffff;
+    text-shadow: 0 0 15px rgba(129, 140, 248, 0.6);
 }
 </style>
