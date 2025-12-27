@@ -45,7 +45,7 @@ class DashboardController extends Controller
     {
         $orders = Order::where('user_id', auth()->id())
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->through(function ($order) {
                 return [
                     'id' => $order->id,

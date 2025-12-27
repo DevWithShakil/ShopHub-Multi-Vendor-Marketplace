@@ -197,12 +197,24 @@ class HomeController extends Controller
         return response()->json($products);
     }
 
-    public function trackOrder(Request $request) {
-        $order = null;
-        if ($request->isMethod('post')) {
-            $request->validate(['invoice_no' => 'required|string|exists:orders,invoice_no']);
-            $order = Order::with(['items.product'])->where('invoice_no', $request->invoice_no)->first();
-        }
-        return Inertia::render('TrackOrder', ['order' => $order, 'filters' => $request->only('invoice_no')]);
+    public function trackOrder(Request $request)
+{
+    // ১. ইনপুট নেওয়া (GET বা POST যেভাবেই আসুক)
+    $invoice_no = $request->input('invoice_no');
+
+    $order = null;
+
+    // ২. যদি ইনভয়েস নম্বর থাকে, তবে অর্ডার খুঁজবে
+    if ($invoice_no) {
+        $order = Order::with(['items.product'])
+            ->where('invoice_no', $invoice_no)
+            ->first();
     }
+
+    // ৩. ভিউ রিটার্ন করা (অর্ডার পাওয়া গেলে ডাটা সহ, না হলে খালি)
+    return Inertia::render('TrackOrder', [
+        'order' => $order,
+        'filters' => ['invoice_no' => $invoice_no]
+    ]);
+}
 }

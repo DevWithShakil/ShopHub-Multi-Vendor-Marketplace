@@ -11,6 +11,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FlashSaleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -109,5 +110,7 @@ Route::get('/become-a-vendor', function () {
 })->name('vendor.register');
 
 Route::post('/vendor-store', [VendorController::class, 'store'])->name('vendor.store');
+
+Route::get('/flash-sale/{id}', [FlashSaleController::class, 'show'])->name('flash-sale.show');
 
 require __DIR__.'/auth.php';

@@ -5,12 +5,26 @@ import {
     ShoppingBagIcon,
     EyeIcon,
     HomeIcon,
-    ArrowDownTrayIcon, // ✅ আইকন ইমপোর্ট করা হলো
+    ArrowDownTrayIcon,
 } from "@heroicons/vue/24/outline";
 
-defineProps({
-    orders: Object, // Pagination Object
+// Define props with a default to avoid "undefined" errors
+const props = defineProps({
+    orders: {
+        type: Object,
+        default: () => ({ data: [], links: [] }), // Default empty structure
+    },
 });
+
+// Helper for date formatting
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+};
 </script>
 
 <template>
@@ -74,122 +88,131 @@ defineProps({
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5">
-                                <tr
-                                    v-for="order in orders.data"
-                                    :key="order.id"
-                                    class="group hover:bg-white/5 transition-colors duration-200"
+                                <template
+                                    v-if="
+                                        orders &&
+                                        orders.data &&
+                                        orders.data.length > 0
+                                    "
                                 >
-                                    <td class="p-6">
-                                        <span
-                                            class="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
-                                        >
-                                            #{{ order.invoice_no }}
-                                        </span>
-                                    </td>
-
-                                    <td
-                                        class="p-6 text-sm text-gray-300 font-medium"
+                                    <tr
+                                        v-for="order in orders.data"
+                                        :key="order.id"
+                                        class="group hover:bg-white/5 transition-colors duration-200"
                                     >
-                                        {{
-                                            new Date(
-                                                order.created_at
-                                            ).toLocaleDateString()
-                                        }}
-                                    </td>
-
-                                    <td class="p-6 text-sm text-gray-400">
-                                        {{ order.items_count }} Items
-                                    </td>
-
-                                    <td
-                                        class="p-6 font-bold text-white text-lg"
-                                    >
-                                        ৳{{ order.total_amount }}
-                                    </td>
-
-                                    <td class="p-6">
-                                        <span
-                                            class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm flex w-fit items-center gap-1.5"
-                                            :class="{
-                                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20':
-                                                    order.status === 'pending',
-                                                'bg-blue-500/10 text-blue-400 border-blue-500/20':
-                                                    order.status ===
-                                                    'processing',
-                                                'bg-purple-500/10 text-purple-400 border-purple-500/20':
-                                                    order.status === 'shipped',
-                                                'bg-green-500/10 text-green-400 border-green-500/20':
-                                                    order.status ===
-                                                        'delivered' ||
-                                                    order.status ===
-                                                        'completed',
-                                                'bg-rose-500/10 text-rose-400 border-rose-500/20':
-                                                    order.status ===
-                                                    'cancelled',
-                                            }"
-                                        >
+                                        <td class="p-6">
                                             <span
-                                                class="w-1.5 h-1.5 rounded-full"
+                                                class="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20"
+                                            >
+                                                #{{ order.invoice_no }}
+                                            </span>
+                                        </td>
+                                        <td
+                                            class="p-6 text-sm text-gray-300 font-medium"
+                                        >
+                                            {{ formatDate(order.created_at) }}
+                                        </td>
+                                        <td class="p-6 text-sm text-gray-400">
+                                            {{ order.items_count || 0 }} Items
+                                        </td>
+                                        <td
+                                            class="p-6 font-bold text-white text-lg"
+                                        >
+                                            ৳{{ order.total_amount }}
+                                        </td>
+                                        <td class="p-6">
+                                            <span
+                                                class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm flex w-fit items-center gap-1.5"
                                                 :class="{
-                                                    'bg-yellow-400':
+                                                    'bg-yellow-500/10 text-yellow-400 border-yellow-500/20':
                                                         order.status ===
                                                         'pending',
-                                                    'bg-blue-400':
+                                                    'bg-blue-500/10 text-blue-400 border-blue-500/20':
                                                         order.status ===
                                                         'processing',
-                                                    'bg-purple-400':
+                                                    'bg-purple-500/10 text-purple-400 border-purple-500/20':
                                                         order.status ===
                                                         'shipped',
-                                                    'bg-green-400':
-                                                        order.status ===
-                                                            'delivered' ||
-                                                        order.status ===
+                                                    'bg-green-500/10 text-green-400 border-green-500/20':
+                                                        [
+                                                            'delivered',
                                                             'completed',
-                                                    'bg-rose-400':
+                                                        ].includes(
+                                                            order.status
+                                                        ),
+                                                    'bg-rose-500/10 text-rose-400 border-rose-500/20':
                                                         order.status ===
                                                         'cancelled',
                                                 }"
-                                            ></span>
-                                            {{ order.status }}
-                                        </span>
-                                    </td>
-
-                                    <td class="p-6 text-right">
-                                        <div
-                                            class="flex items-center justify-end gap-2"
-                                        >
-                                            <Link
-                                                :href="
-                                                    route(
-                                                        'dashboard.order.details',
-                                                        order.invoice_no
-                                                    )
-                                                "
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
                                             >
-                                                <EyeIcon class="w-4 h-4" /> View
-                                            </Link>
-
-                                            <a
-                                                :href="
-                                                    route(
-                                                        'invoice.download',
-                                                        order.id
-                                                    )
-                                                "
-                                                target="_blank"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-lg transition shadow-lg"
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full"
+                                                    :class="{
+                                                        'bg-yellow-400':
+                                                            order.status ===
+                                                            'pending',
+                                                        'bg-blue-400':
+                                                            order.status ===
+                                                            'processing',
+                                                        'bg-purple-400':
+                                                            order.status ===
+                                                            'shipped',
+                                                        'bg-green-400': [
+                                                            'delivered',
+                                                            'completed',
+                                                        ].includes(
+                                                            order.status
+                                                        ),
+                                                        'bg-rose-400':
+                                                            order.status ===
+                                                            'cancelled',
+                                                    }"
+                                                ></span>
+                                                {{ order.status }}
+                                            </span>
+                                        </td>
+                                        <td class="p-6 text-right">
+                                            <div
+                                                class="flex items-center justify-end gap-2"
                                             >
-                                                <ArrowDownTrayIcon
-                                                    class="w-4 h-4"
-                                                />
-                                                Invoice
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
+                                                <Link
+                                                    :href="
+                                                        route(
+                                                            'dashboard.order.details',
+                                                            order.invoice_no
+                                                        )
+                                                    "
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-500/20"
+                                                >
+                                                    <EyeIcon class="w-4 h-4" />
+                                                    View
+                                                </Link>
+                                                <a
+                                                    v-if="
+                                                        route().has(
+                                                            'invoice.download'
+                                                        )
+                                                    "
+                                                    :href="
+                                                        route(
+                                                            'invoice.download',
+                                                            order.id
+                                                        )
+                                                    "
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-lg transition shadow-lg"
+                                                >
+                                                    <ArrowDownTrayIcon
+                                                        class="w-4 h-4"
+                                                    />
+                                                    Invoice
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
 
-                                <tr v-if="orders.data.length === 0">
+                                <tr v-else>
                                     <td colspan="6" class="p-16 text-center">
                                         <div class="flex flex-col items-center">
                                             <div
@@ -225,13 +248,13 @@ defineProps({
                     </div>
 
                     <div
-                        v-if="orders.links.length > 3"
+                        v-if="orders && orders.links && orders.links.length > 3"
                         class="p-6 border-t border-white/10 flex justify-center gap-2 bg-black/20"
                     >
                         <Link
                             v-for="(link, k) in orders.links"
                             :key="k"
-                            :href="link.url"
+                            :href="link.url || '#'"
                             v-html="link.label"
                             class="px-4 py-2 rounded-lg text-sm font-bold transition-all border"
                             :class="
