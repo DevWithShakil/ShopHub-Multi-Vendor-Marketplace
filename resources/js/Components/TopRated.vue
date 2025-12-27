@@ -1,23 +1,20 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import {
-    TrophyIcon,
+    StarIcon, // Top Rated এর জন্য স্টার আইকন
     ArrowRightIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
-} from "@heroicons/vue/24/solid"; // Solid Icons for impact
+} from "@heroicons/vue/24/solid";
 import ProductCard from "@/Components/ProductCard.vue";
 
-const props = defineProps({ products: Array });
-
-// Logic: Sort by Rating Descending
-const topRated = computed(() => {
-    return [...props.products]
-        .sort(
-            (a, b) => (b.reviews_avg_rating || 0) - (a.reviews_avg_rating || 0)
-        )
-        .slice(0, 8);
+// ✅ Props Receive
+const props = defineProps({
+    products: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // --- 🔄 Scroll Logic ---
@@ -37,12 +34,15 @@ const scrollRight = () => {
 </script>
 
 <template>
-    <section class="py-16 relative overflow-hidden bg-[#0B0F19]">
+    <section
+        v-if="products && products.length > 0"
+        class="py-16 relative overflow-hidden bg-[#0B0F19]"
+    >
         <div
             class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"
         ></div>
         <div
-            class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none"
+            class="absolute top-0 left-0 w-[600px] h-[600px] bg-yellow-600/10 rounded-full blur-[150px] pointer-events-none"
         ></div>
 
         <div class="container mx-auto px-4 lg:px-8 relative z-10">
@@ -55,10 +55,10 @@ const scrollRight = () => {
                             class="absolute inset-0 bg-yellow-500 blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500"
                         ></div>
                         <div
-                            class="w-16 h-16 relative bg-[#151925] border border-yellow-500/30 rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500"
+                            class="w-16 h-16 relative bg-[#151925] border border-yellow-500/30 rounded-2xl flex items-center justify-center transform group-hover:-rotate-6 transition-transform duration-500"
                         >
-                            <TrophyIcon
-                                class="w-8 h-8 text-yellow-400 animate-pulse"
+                            <StarIcon
+                                class="w-8 h-8 text-yellow-400 animate-spin-slow"
                             />
                         </div>
                     </div>
@@ -66,7 +66,7 @@ const scrollRight = () => {
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <span
-                                class="w-2 h-2 rounded-full bg-yellow-400 animate-ping"
+                                class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"
                             ></span>
                             <span
                                 class="text-xs font-bold text-yellow-400 uppercase tracking-widest"
@@ -89,7 +89,7 @@ const scrollRight = () => {
                     :href="route('products.index', { sort: 'rating' })"
                     class="hidden md:flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition group"
                 >
-                    View All Favorites
+                    View All Top Rated
                     <ArrowRightIcon
                         class="w-4 h-4 text-yellow-500 group-hover:translate-x-1 transition-transform"
                     />
@@ -116,12 +116,12 @@ const scrollRight = () => {
                     class="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-8 px-2 snap-x snap-mandatory"
                 >
                     <ProductCard
-                        v-for="product in topRated"
+                        v-for="product in products"
                         :key="product.id"
                         :product="product"
                         badge="Top"
-                        badgeColor="bg-gradient-to-r from-yellow-400 to-amber-600"
-                        class="snap-start border-yellow-500/10 hover:border-yellow-500/40"
+                        badgeColor="bg-gradient-to-r from-yellow-500 to-amber-600"
+                        class="snap-start border-yellow-500/10 hover:border-yellow-500/40 min-w-[280px]"
                     />
                 </div>
             </div>
@@ -131,7 +131,7 @@ const scrollRight = () => {
                     :href="route('products.index', { sort: 'rating' })"
                     class="w-full text-center bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl border border-white/10"
                 >
-                    Explore Top Rated
+                    See Top Rated
                 </Link>
             </div>
         </div>
@@ -139,12 +139,22 @@ const scrollRight = () => {
 </template>
 
 <style scoped>
-/* Hide Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+.animate-spin-slow {
+    animation: spin 10s linear infinite;
+}
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

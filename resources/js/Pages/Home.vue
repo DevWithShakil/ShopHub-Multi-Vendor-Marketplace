@@ -26,7 +26,7 @@ import {
     HeartIcon,
 } from "@heroicons/vue/24/outline";
 
-// --- Props ---
+// --- Props (Updated to include 'testimonials') ---
 const props = defineProps({
     slides: Array,
     categories: Array,
@@ -34,10 +34,11 @@ const props = defineProps({
     topRated: Array,
     bestSellers: Array,
     flashSale: Object,
-    brands: Array, // ✅ New Prop for Brands
+    brands: Array,
+    testimonials: Array, // ✅ Added missing prop
 });
 
-// --- 🔔 Toast Logic (Optional if using MainLayout Global Toast) ---
+// --- 🔔 Toast Logic ---
 const toastMessage = ref(null);
 const toastType = ref("success");
 
@@ -123,7 +124,8 @@ const showToast = (message, type = "success") => {
 
                 <TopRated :products="topRated" />
 
-                <Testimonials />
+                <Testimonials :testimonials="testimonials" />
+
                 <FAQSection />
                 <RecentlyViewed />
             </div>

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Slider;
 use App\Models\FlashSale;
 use App\Models\Brand;
+use App\Models\Testimonial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -23,13 +24,30 @@ class HomeController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get()
             ->map(function ($slide) {
-                // ... (আপনার স্লাইডার ম্যাপিং লজিক ঠিক আছে) ...
+                $imageUrl = $slide->image ? asset('storage/' . $slide->image) : null;
+                $price = $slide->product ? '৳' . $slide->product->base_price : '';
+                $slug = $slide->product ? $slide->product->slug : '#';
+                $bgClass = "bg-gradient-radial " . ($slide->bg_color ?? 'from-slate-900 via-purple-900 to-slate-900');
+
+                $btnClass = 'bg-indigo-600 hover:bg-indigo-500';
+                if (str_contains($slide->bg_color ?? '', 'orange')) {
+                    $btnClass = 'bg-orange-600 hover:bg-orange-500';
+                } elseif (str_contains($slide->bg_color ?? '', 'emerald')) {
+                    $btnClass = 'bg-emerald-600 hover:bg-emerald-500';
+                }
+
                 return [
                     'id' => $slide->id,
-                    'image' => $slide->image ? asset('storage/' . $slide->image) : null,
-                    'price' => $slide->product ? '৳' . $slide->product->base_price : '',
-                    'slug' => $slide->product ? $slide->product->slug : '#',
-                    // ... বাকি ফিল্ড ...
+                    'tag' => $slide->title ?? 'Welcome',
+                    'name' => $slide->heading ?? 'ShopHub Store',
+                    'desc' => $slide->description,
+                    'image' => $imageUrl,
+                    'price' => $price,
+                    'slug' => $slug,
+                    'bgClass' => $bgClass,
+                    'btnClass' => $btnClass,
+                    'textGradient' => 'from-white via-gray-200 to-gray-400',
+                    'highlight' => '',
                 ];
             });
 
@@ -39,15 +57,14 @@ class HomeController extends Controller
             ->select('id', 'name', 'slug')
             ->get();
 
-        // 3. ✅ New Arrivals (ফিক্সড)
-        // এটিই মেইন কোড যা ফ্রন্টএন্ডে যাবে। লেটেস্ট ১০টি প্রোডাক্ট নেওয়া হচ্ছে।
+        // 3. New Arrivals
         $newArrivals = Product::with('category')
             ->where('is_active', true)
             ->where('approval_status', 'approved')
             ->withAvg('reviews as reviews_avg_rating', 'rating')
             ->withCount('reviews')
-            ->latest() // created_at desc
-            ->take(10) // ১০টি প্রোডাক্ট (ফ্রন্টএন্ডে স্ক্রল করলে ১০টি ভালো দেখাবে)
+            ->latest()
+            ->take(10)
             ->get();
 
         // 4. Top Rated
@@ -77,9 +94,9 @@ class HomeController extends Controller
             ->get();
 
         if ($bestSellers->isEmpty()) {
-            $bestSellers = Product::where('is_active', true)
+            $bestSellers = Product::with('category')
+                ->where('is_active', true)
                 ->where('approval_status', 'approved')
-                ->with('category')
                 ->withAvg('reviews as reviews_avg_rating', 'rating')
                 ->withCount('reviews')
                 ->inRandomOrder()
@@ -110,7 +127,7 @@ class HomeController extends Controller
             ->take(20)
             ->get();
 
-        // 8. General Products (For optimization, removed unnecessary map logic if
+        // 8. General Products
         $products = Product::with(['category'])
             ->where('is_active', true)
             ->where('approval_status', 'approved')
@@ -120,18 +137,63 @@ class HomeController extends Controller
             ->take(20)
             ->get();
 
+        // 9. Testimonials Logic Added Here
+        $testimonials = Testimonial::where('is_active', true)
+            ->latest()
+            ->take(6) // Fetch latest 6 active testimonials
+            ->get();
 
         return Inertia::render('Home', [
             'slides' => $slides,
             'categories' => $categories,
-            'newArrivals' => $newArrivals, //
+            'newArrivals' => $newArrivals,
             'topRated' => $topRated,
             'bestSellers' => $bestSellers,
             'flashSale' => $flashSale,
             'products' => $products,
             'brands' => $brands,
+            'testimonials' => $testimonials, // Passing testimonials to frontend
         ]);
     }
 
-    // ... search & trackOrder methods (unchanged)
+    public function search(Request $request) {
+        $query = $request->input('query');
+        if (!$query) return response()->json([]);
+
+        $products = Product::with('category')
+            ->where('is_active', true)
+            ->where('approval_status', 'approved')
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                  ->orWhereRaw("LOWER(name) LIKE ?", ['%' . strtolower($query) . '%']);
+            })->take(5)->get()->map(function ($p) {
+                return [
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'image' => $p->thumb_image,
+                    'price' => $p->base_price,
+                    'category' => $p->category?->name,
+                    'vendor_id' => $p->vendor_id
+                ];
+            });
+
+        return response()->json($products);
+    }
+
+    public function trackOrder(Request $request)
+    {
+        $invoice_no = $request->input('invoice_no');
+        $order = null;
+
+        if ($invoice_no) {
+            $order = Order::with(['items.product'])
+                ->where('invoice_no', $invoice_no)
+                ->first();
+        }
+
+        return Inertia::render('TrackOrder', [
+            'order' => $order,
+            'filters' => ['invoice_no' => $invoice_no]
+        ]);
+    }
 }

@@ -1,67 +1,63 @@
 <script setup>
 import { StarIcon } from "@heroicons/vue/24/solid";
-import { ChatBubbleBottomCenterTextIcon } from "@heroicons/vue/24/outline";
+import { UserCircleIcon } from "@heroicons/vue/24/outline";
 
-const reviews = [
-    {
-        name: "Rahim Ahmed",
-        role: "Verified Buyer",
-        comment:
-            "Amazing quality! The delivery was super fast, and the packaging was premium. Highly recommended.",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-        rating: 5,
+// ✅ Props রিসিভ
+const props = defineProps({
+    testimonials: {
+        type: Array,
+        default: () => [],
     },
-    {
-        name: "Sadia Islam",
-        role: "Gadget Lover",
-        comment:
-            "Best shopping experience ever. The product matches the description perfectly. Customer support is very helpful.",
-        avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-        rating: 5,
-    },
-    {
-        name: "Tanvir Hasan",
-        role: "Tech Enthusiast",
-        comment:
-            "ShopHub never disappoints. I bought a mechanical keyboard and it works like a charm. 10/10 service.",
-        avatar: "https://i.pravatar.cc/150?u=a04258114e29026302d",
-        rating: 4,
-    },
-];
+});
+
+// ইমেজ পাথ ফিক্সার
+const getAvatar = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `/storage/${path}`;
+};
 </script>
 
 <template>
-    <section class="py-20 bg-[#0B0F19] relative overflow-hidden">
+    <section
+        v-if="testimonials && testimonials.length > 0"
+        class="py-16 bg-[#0B0F19] relative overflow-hidden"
+    >
         <div
-            class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none"
+            class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        ></div>
+        <div
+            class="absolute bottom-0 right-0 w-[300px] h-[300px] bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none"
         ></div>
 
-        <div class="container mx-auto px-4 lg:px-8 relative z-10">
-            <div class="text-center mb-16">
-                <div
-                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4"
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center mb-12">
+                <span
+                    class="text-indigo-400 font-bold text-xs uppercase tracking-widest mb-2 block"
+                    >Customer Stories</span
                 >
-                    <ChatBubbleBottomCenterTextIcon class="w-4 h-4" /> User
-                    Feedback
-                </div>
                 <h2
-                    class="text-3xl md:text-5xl font-black text-white tracking-tight"
+                    class="text-3xl md:text-4xl font-black text-white tracking-tight"
                 >
-                    Trusted by <span class="text-indigo-500">Thousands</span>
+                    What Our Clients
+                    <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400"
+                        >Say</span
+                    >
                 </h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div
-                    v-for="(review, index) in reviews"
-                    :key="index"
-                    class="bg-[#151925] p-8 rounded-[2rem] border border-white/5 hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-2 group"
+                    v-for="review in testimonials"
+                    :key="review.id"
+                    class="bg-[#151925] border border-white/5 p-6 rounded-2xl hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
                 >
-                    <div class="flex text-yellow-400 mb-6">
+                    <div class="flex gap-1 mb-4">
                         <StarIcon
                             v-for="i in 5"
                             :key="i"
-                            class="w-5 h-5"
+                            class="w-4 h-4"
                             :class="
                                 i <= review.rating
                                     ? 'text-yellow-400'
@@ -71,24 +67,37 @@ const reviews = [
                     </div>
 
                     <p
-                        class="text-gray-300 text-lg leading-relaxed mb-8 italic"
+                        class="text-gray-300 text-sm leading-relaxed mb-6 italic opacity-80 group-hover:opacity-100 transition-opacity"
                     >
-                        "{{ review.comment }}"
+                        "{{ review.message }}"
                     </p>
 
-                    <div class="flex items-center gap-4">
-                        <img
-                            :src="review.avatar"
-                            class="w-12 h-12 rounded-full border-2 border-indigo-500/50"
-                        />
+                    <div
+                        class="flex items-center gap-4 border-t border-white/5 pt-4"
+                    >
+                        <div
+                            class="w-12 h-12 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-indigo-500/50 transition-colors"
+                        >
+                            <img
+                                v-if="review.avatar"
+                                :src="getAvatar(review.avatar)"
+                                :alt="review.name"
+                                class="w-full h-full object-cover"
+                            />
+                            <UserCircleIcon
+                                v-else
+                                class="w-full h-full text-gray-500 bg-[#0B0F19]"
+                            />
+                        </div>
                         <div>
-                            <h4 class="text-white font-bold">
+                            <h4 class="text-white font-bold text-sm">
                                 {{ review.name }}
                             </h4>
                             <p
-                                class="text-xs text-gray-500 uppercase tracking-wider font-bold"
+                                class="text-xs text-indigo-400 font-medium"
+                                v-if="review.designation"
                             >
-                                {{ review.role }}
+                                {{ review.designation }}
                             </p>
                         </div>
                     </div>
