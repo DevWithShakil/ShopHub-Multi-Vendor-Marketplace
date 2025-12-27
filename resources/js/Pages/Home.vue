@@ -108,22 +108,19 @@ const showToast = (message, type = "success") => {
         <HeroSlider :slides="slides" />
 
         <FlashSaleSection v-if="flashSale" :saleData="flashSale" />
-
-        <ServiceFeatures />
-
-        <BrandMarquee :brands="brands" />
+        <ActivePromos :promos="activePromos" />
 
         <div class="bg-[#0B0F19] pt-10 pb-4">
             <div class="container mx-auto px-4 lg:px-8 space-y-24">
                 <NewArrivals :products="newArrivals" />
 
-                <ActivePromos :promos="activePromos" />
-
                 <BestSellers :products="bestSellers" />
 
-                <PromoBanner />
-
                 <TopRated :products="topRated" />
+                <PromoBanner />
+                <ServiceFeatures />
+
+                <BrandMarquee :brands="brands" />
 
                 <Testimonials :testimonials="testimonials" />
 

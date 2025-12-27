@@ -15,10 +15,9 @@ const page = usePage();
 const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
 
-// --- Logic ---
-
-// 1. Localized Name Helper
+// --- 1. Localized Name Helper ---
 const getName = (nameField) => {
+    if (!nameField) return "Product";
     try {
         if (typeof nameField === "object") {
             return nameField[page.props.locale] || nameField["en"] || "Product";
@@ -33,14 +32,19 @@ const getName = (nameField) => {
     }
 };
 
-// 2. Price Logic
+// --- 2. Price Logic ---
 const priceData = computed(() => {
-    const base = Number(props.product.base_price);
-    const sale = props.product.pivot?.discount_price
-        ? Number(props.product.pivot.discount_price)
-        : props.product.discount_price
-        ? Number(props.product.discount_price)
-        : base;
+    const base = Number(props.product.base_price) || 0;
+
+    // Flash Sale Price Logic
+    let sale = base;
+    if (props.product.pivot && props.product.pivot.discount_price) {
+        sale = Number(props.product.pivot.discount_price);
+    } else if (props.product.discount_price) {
+        sale = Number(props.product.discount_price);
+    }
+
+    if (isNaN(sale)) sale = base;
 
     const discountPercent =
         base > sale ? Math.round(((base - sale) / base) * 100) : 0;
@@ -48,40 +52,32 @@ const priceData = computed(() => {
     return { base, sale, discountPercent };
 });
 
-// 3. Stock Logic
+// --- 3. Stock Logic ---
 const stockData = computed(() => {
-    const sold = props.product.pivot?.sold || 0;
-    const limit = props.product.pivot?.stock_limit || 10;
+    const sold = Number(props.product.pivot?.sold) || 0;
+    const limit = Number(props.product.pivot?.stock_limit) || 10;
     const percent = Math.min(Math.round((sold / limit) * 100), 100);
     const left = Math.max(limit - sold, 0);
     return { sold, limit, percent, left };
 });
 
-// 4. Image Logic
-const imageUrl = computed(() => {
-    if (!props.product.thumb_image) return "https://placehold.co/400x400";
-    return props.product.thumb_image.startsWith("http")
-        ? props.product.thumb_image
-        : `/storage/${props.product.thumb_image}`;
-});
-
-// --- Actions (Matches ProductCard.vue Logic) ---
+// --- 4. Actions (FIXED FOR CART STORE) ---
 
 const addToCart = () => {
-    cartStore.addToCart({
+    const cartItem = {
+        ...props.product,
         id: props.product.id,
         name: getName(props.product.name),
-        price: priceData.value.sale,
-        image: imageUrl.value,
+        base_price: priceData.value.sale,
+        thumb_image: props.product.thumb_image,
         vendor_id: props.product.vendor_id,
-        quantity: 1,
-    });
-    // টোস্ট স্টোর বা লেআউট থেকে হ্যান্ডেল হবে
+    };
+
+    cartStore.addToCart(cartItem, 1);
 };
 
 const toggleWishlist = () => {
     wishlistStore.toggle(props.product.id);
-    // টোস্ট স্টোর বা লেআউট থেকে হ্যান্ডেল হবে
 };
 </script>
 
@@ -115,10 +111,17 @@ const toggleWishlist = () => {
                 class="block w-full h-full"
             >
                 <img
-                    :src="imageUrl"
+                    v-if="product.thumb_image"
+                    :src="'/storage/' + product.thumb_image"
                     class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 ease-out"
                     alt="Product Image"
                 />
+                <div
+                    v-else
+                    class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100"
+                >
+                    No Image
+                </div>
             </Link>
 
             <div
