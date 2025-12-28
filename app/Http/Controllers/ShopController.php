@@ -101,40 +101,58 @@ class ShopController extends Controller
         ]);
     }
 
-    public function vendorProfile($id)
-    {
-        $vendor = Vendor::withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->findOrFail($id);
 
-        // Vendor Products
-        $products = Product::where('vendor_id', $id)
-            ->where('is_active', true)
-            ->where('approval_status', 'approved')
-            ->with(['category', 'brand', 'reviews'])
-            ->latest()
-            ->paginate(12);
+public function vendorProfile($id)
+{
+    $vendor = Vendor::withAvg('reviews', 'rating')
+        ->withCount('reviews')
+        ->findOrFail($id);
 
-        // Vendor Coupons
-        $vouchers = PromoCode::where('vendor_id', $id)
-            ->where('is_active', true)
-            ->whereDate('end_date', '>=', now())
-            ->latest()
-            ->get();
+    $products = Product::where('vendor_id', $id)
+        ->where('is_active', true)
+        ->where('approval_status', 'approved')
+        ->with(['category', 'brand', 'reviews'])
+        ->latest()
+        ->paginate(12);
 
-        return Inertia::render('Vendor/Show', [
-            'vendor' => [
-                'id' => $vendor->id,
-                'name' => $vendor->shop_name,
-                'logo' => $vendor->logo ? asset('storage/' . $vendor->logo) : null,
-                'banner' => $vendor->banner ? asset('storage/' . $vendor->banner) : null,
-                'joined' => $vendor->created_at->format('M Y'),
-                'rating' => number_format($vendor->reviews_avg_rating, 1),
-                'review_count' => $vendor->reviews_count,
-                'address' => $vendor->shop_address,
-            ],
-            'products' => $products,
-            'vouchers' => $vouchers,
-        ]);
-    }
+    $vouchers = PromoCode::where('vendor_id', $id)
+        ->where('is_active', true)
+        ->whereDate('end_date', '>=', now())
+        ->latest()
+        ->get();
+
+    $reviews = $vendor->reviews()
+        ->with('user')
+        ->latest()
+        ->take(5)
+        ->get()
+        ->map(function ($review) {
+            return [
+                'id' => $review->id,
+                'user' => $review->user->name,
+                'avatar' => $review->user->profile_photo_url ?? null,
+                'rating' => $review->rating,
+                'comment' => $review->comment,
+                'date' => $review->created_at->diffForHumans(),
+                'product_name' => $review->product ? $review->product->name : 'Product',
+                'product_image' => $review->product ? asset('storage/' . $review->product->thumb_image) : null,
+            ];
+        });
+
+    return Inertia::render('Vendor/Show', [
+        'vendor' => [
+            'id' => $vendor->id,
+            'name' => $vendor->shop_name,
+            'logo' => asset('storage/' . $vendor->logo),
+            'banner' => $vendor->banner ? asset('storage/' . $vendor->banner) : null,
+            'joined' => $vendor->created_at->format('M Y'),
+            'rating' => number_format($vendor->reviews_avg_rating, 1),
+            'review_count' => $vendor->reviews_count,
+            'address' => $vendor->shop_address,
+        ],
+        'products' => $products,
+        'vouchers' => $vouchers,
+        'reviews' => $reviews,
+    ]);
+}
 }
