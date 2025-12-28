@@ -18,7 +18,6 @@ class ProductController extends Controller
             ->where('is_active', true);
 
         if ($request->has('category') && $request->category != null) {
-            // Check for category using JSON query for translations or slug
             $category = Category::where('slug', $request->category)->first();
 
             if ($category) {
@@ -68,7 +67,6 @@ class ProductController extends Controller
 
     public function show($slug)
     {
-        // ১. মেইন প্রোডাক্ট ফেচ করা
         $product = Product::with([
                 'category',
                 'vendor',
@@ -83,15 +81,14 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        // ২. 🔥 Related/Similar Products লজিক
-        // একই ক্যাটাগরির প্রোডাক্ট, কিন্তু বর্তমানটি বাদে
+        // 2. Related/Similar Products
         $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id) // বর্তমান প্রোডাক্ট বাদ
+            ->where('id', '!=', $product->id)
             ->where('is_active', true)
             ->withAvg('reviews as reviews_avg_rating', 'rating')
             ->withCount('reviews')
-            ->inRandomOrder() // র‍্যান্ডমলি সাজানো (যাতে প্রতিবার আলাদা আসে)
-            ->take(4) // সর্বোচ্চ ৪টি প্রোডাক্ট
+            ->inRandomOrder()
+            ->take(4)
             ->get()
             ->map(function ($p) {
                 return [
@@ -106,7 +103,6 @@ class ProductController extends Controller
                 ];
             });
 
-        // ৩. ডাটা রেসপন্স সাজানো
         $productData = [
             'id' => $product->id,
             'name' => $product->name,
@@ -118,15 +114,18 @@ class ProductController extends Controller
             'gallery_images' => $product->gallery_images,
             'has_variants' => $product->has_variants,
             'category' => $product->category ? ['name' => $product->category->name, 'slug' => $product->category->slug] : null,
-            'vendor' => $product->vendor ? ['shop_name' => $product->vendor->shop_name] : null,
-            'variants' => $product->variants,
-            'vendor_id' => $product->vendor_id,
 
+            //  Updated Vendor Data (Including ID & Logo for Link)
+            'vendor' => $product->vendor ? [
+                'id' => $product->vendor->id,
+                'shop_name' => $product->vendor->shop_name,
+                'logo' => $product->vendor->logo
+            ] : null,
+
+            'variants' => $product->variants,
             'reviews' => $product->reviews,
             'reviews_avg_rating' => $product->reviews_avg_rating,
             'reviews_count' => $product->reviews_count,
-
-            // ✅ রিলেটেড প্রোডাক্ট পাঠানো হলো
             'related_products' => $relatedProducts,
         ];
 
@@ -136,7 +135,7 @@ class ProductController extends Controller
     }
 
     /**
-     * ✅ Helper Function: Get All Child Category IDs Recursively
+     * Helper Function: Get All Child Category IDs Recursively
      */
     private function getAllCategoryIds($category)
     {

@@ -14,6 +14,7 @@ import {
     ChatBubbleLeftRightIcon,
     CheckCircleIcon,
     XMarkIcon,
+    ArrowRightIcon,
 } from "@heroicons/vue/24/outline";
 import {
     HeartIcon as HeartSolidIcon,
@@ -36,7 +37,7 @@ const selectedVariant = ref(null);
 const toastMessage = ref(null);
 const toastType = ref("success");
 
-// --- 🔔 Toast Helper ---
+// Helper: Toast
 const showToast = (message, type = "success") => {
     toastMessage.value = message;
     toastType.value = type;
@@ -45,7 +46,7 @@ const showToast = (message, type = "success") => {
     }, 3000);
 };
 
-// --- Helper: Localized Name ---
+// Helper: Localized Name
 const getLocalizedName = (name) => {
     try {
         const parsed =
@@ -62,13 +63,13 @@ const getLocalizedName = (name) => {
     }
 };
 
-// --- Computed Price ---
+// Computed Price
 const currentPrice = computed(() => {
     if (selectedVariant.value) return selectedVariant.value.price;
     return props.product.base_price;
 });
 
-// --- Actions ---
+// Actions
 const addToCart = () => {
     cartStore.addToCart(props.product, quantity.value, selectedVariant.value);
     showToast(`Added ${quantity.value} item(s) to cart!`, "success");
@@ -91,11 +92,10 @@ const scrollToReviews = () => {
     }
 };
 
-// --- 👁️ Recently Viewed Logic ---
+// Recently Viewed Logic
 onMounted(() => {
-    // Save to LocalStorage
     let viewed = JSON.parse(localStorage.getItem("recently_viewed")) || [];
-    viewed = viewed.filter((p) => p.id !== props.product.id); // Remove duplicate
+    viewed = viewed.filter((p) => p.id !== props.product.id);
     viewed.unshift({
         id: props.product.id,
         name: getLocalizedName(props.product.name),
@@ -103,7 +103,7 @@ onMounted(() => {
         base_price: props.product.base_price,
         thumb_image: props.product.thumb_image,
     });
-    if (viewed.length > 10) viewed = viewed.slice(0, 10); // Keep max 10
+    if (viewed.length > 10) viewed = viewed.slice(0, 10);
     localStorage.setItem("recently_viewed", JSON.stringify(viewed));
 });
 </script>
@@ -267,22 +267,20 @@ onMounted(() => {
                                 </div>
                                 <span
                                     class="text-xs font-bold text-gray-400 ml-1"
-                                    >({{
+                                >
+                                    ({{
                                         product.reviews_avg_rating
                                             ? parseFloat(
                                                   product.reviews_avg_rating
                                               ).toFixed(1)
                                             : "0.0"
-                                    }})</span
-                                >
+                                    }})
+                                </span>
                                 <span
                                     class="text-[10px] text-gray-500 ml-1 group-hover:text-indigo-400 group-hover:underline"
-                                    >|
-                                    {{
-                                        product.reviews_count || 0
-                                    }}
-                                    Reviews</span
                                 >
+                                    | {{ product.reviews_count || 0 }} Reviews
+                                </span>
                             </div>
                             <div
                                 class="flex items-center gap-1 text-green-400 bg-green-500/10 px-3 py-1 rounded-lg border border-green-500/20"
@@ -301,10 +299,9 @@ onMounted(() => {
                                 <span
                                     v-if="product.discount_price"
                                     class="text-xl text-gray-500 line-through mb-1"
-                                    >৳{{
-                                        parseInt(product.base_price) + 500
-                                    }}</span
                                 >
+                                    ৳{{ parseInt(product.base_price) + 500 }}
+                                </span>
                             </div>
                             <p class="text-sm text-indigo-400 mt-2 font-medium">
                                 Inclusive of all taxes
@@ -407,25 +404,47 @@ onMounted(() => {
                         <div
                             class="mt-8 bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-indigo-500/30 transition"
                         >
-                            <div class="flex items-center gap-4">
+                            <Link
+                                v-if="product.vendor"
+                                :href="route('vendor.show', product.vendor.id)"
+                                class="flex items-center gap-4 flex-1 cursor-pointer"
+                            >
                                 <div
-                                    class="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg"
+                                    class="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden"
                                 >
-                                    {{ product.vendor?.shop_name.charAt(0) }}
+                                    <img
+                                        v-if="product.vendor.logo"
+                                        :src="'/storage/' + product.vendor.logo"
+                                        class="w-full h-full object-cover"
+                                    />
+                                    <span v-else>{{
+                                        product.vendor.shop_name
+                                            .charAt(0)
+                                            .toUpperCase()
+                                    }}</span>
                                 </div>
+
                                 <div>
                                     <p
-                                        class="text-xs text-gray-500 uppercase font-bold tracking-wider"
+                                        class="text-xs text-gray-500 uppercase font-bold tracking-wider group-hover:text-indigo-400 transition"
                                     >
                                         Sold by
                                     </p>
                                     <p
-                                        class="font-bold text-white group-hover:text-indigo-400 transition"
+                                        class="font-bold text-white group-hover:text-indigo-300 transition text-lg"
                                     >
-                                        {{ product.vendor?.shop_name }}
+                                        {{ product.vendor.shop_name }}
                                     </p>
                                 </div>
-                            </div>
+                            </Link>
+
+                            <Link
+                                v-if="product.vendor"
+                                :href="route('vendor.show', product.vendor.id)"
+                                class="hidden sm:flex items-center gap-1 text-xs font-bold text-indigo-400 border border-indigo-500/30 px-3 py-1.5 rounded-lg hover:bg-indigo-500 hover:text-white transition"
+                            >
+                                Visit Store <ArrowRightIcon class="w-3 h-3" />
+                            </Link>
                         </div>
 
                         <div class="mt-10">
@@ -448,7 +467,6 @@ onMounted(() => {
                     >
                         Customer Reviews
                     </h2>
-
                     <div
                         v-if="product.reviews && product.reviews.length > 0"
                         class="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -505,7 +523,6 @@ onMounted(() => {
                             </p>
                         </div>
                     </div>
-
                     <div
                         v-else
                         class="text-center py-12 bg-white/5 rounded-3xl border border-dashed border-white/10"
