@@ -15,7 +15,13 @@ import {
     ClockIcon,
     CheckIcon,
     MagnifyingGlassIcon,
+    StarIcon,
+    CalendarDaysIcon,
+    ShoppingBagIcon,
+    CheckBadgeIcon,
+    BuildingStorefrontIcon,
 } from "@heroicons/vue/24/outline";
+import { StarIcon as StarSolid } from "@heroicons/vue/24/solid";
 
 import AppLayout from "@/Layouts/MainLayout.vue";
 import ProductCard from "@/Components/ProductCard.vue";
@@ -26,6 +32,7 @@ const props = defineProps({
     categories: Array,
     brands: Array,
     filters: Object,
+    shopProfile: Object, // ✅ Contains rating & total_reviews
 });
 
 const page = usePage();
@@ -54,22 +61,23 @@ const isSortOpen = ref(false);
 const sortContainer = ref(null);
 const isLoading = ref(false);
 
-// ✅ Price Slider Config
+// Price Slider Config
 const minGap = 1000;
-const sliderMax = 500000; // 5 Lakh Limit
+const sliderMax = 500000;
 
 const params = ref({
     search: props.filters.search || "",
     category: props.filters.category || "",
     brand: props.filters.brand || "",
     sort: props.filters.sort || "newest",
+    vendor_id: props.filters.vendor_id || null,
     min_price: props.filters.min_price ? parseInt(props.filters.min_price) : 0,
     max_price: props.filters.max_price
         ? parseInt(props.filters.max_price)
         : sliderMax,
 });
 
-// ✅ Check Active Filters
+// Check Active Filters
 const hasActiveFilters = computed(() => {
     return (
         params.value.category !== "" ||
@@ -118,7 +126,7 @@ const closeDropdown = (e) => {
 onMounted(() => document.addEventListener("click", closeDropdown));
 onUnmounted(() => document.removeEventListener("click", closeDropdown));
 
-// ✅ Slider Logic Corrected
+// Slider Logic
 const handleMinChange = () => {
     if (params.value.max_price - params.value.min_price < minGap) {
         params.value.min_price = params.value.max_price - minGap;
@@ -133,7 +141,6 @@ const handleMaxChange = () => {
     updateParams();
 };
 
-// CSS logic to set the left and right position of the colored bar
 const sliderStyle = computed(() => {
     const minPercent = (params.value.min_price / sliderMax) * 100;
     const maxPercent = (params.value.max_price / sliderMax) * 100;
@@ -169,6 +176,7 @@ const clearFilters = () => {
         category: "",
         brand: "",
         sort: "newest",
+        vendor_id: null,
         min_price: 0,
         max_price: sliderMax,
     };
@@ -211,12 +219,10 @@ const clearFilters = () => {
                         >
                             <span
                                 class="relative z-10 flex items-center gap-2 whitespace-nowrap"
+                                ><Squares2X2Icon class="w-4 h-4" /> All
+                                Collections</span
                             >
-                                <Squares2X2Icon class="w-4 h-4" /> All
-                                Collections
-                            </span>
                         </button>
-
                         <button
                             v-for="cat in categories"
                             :key="cat.id"
@@ -235,9 +241,8 @@ const clearFilters = () => {
                             <span
                                 v-if="params.category !== cat.slug"
                                 class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-md border border-white/5 ml-1 transition-colors group-hover:bg-white/20"
+                                >{{ cat.products_count }}</span
                             >
-                                {{ cat.products_count }}
-                            </span>
                         </button>
                     </div>
                 </div>
@@ -273,7 +278,6 @@ const clearFilters = () => {
                                 class="w-2 h-2 bg-orange-500 rounded-full animate-pulse ml-1"
                             ></span>
                         </button>
-
                         <div class="flex-1 relative" ref="sortContainer">
                             <button
                                 @click="isSortOpen = !isSortOpen"
@@ -337,7 +341,6 @@ const clearFilters = () => {
                             "
                             @click="showMobileFilters = false"
                         ></div>
-
                         <div
                             class="absolute lg:sticky lg:top-[150px] right-0 lg:left-0 h-full lg:h-auto w-[85%] max-w-[340px] lg:w-full bg-[#0b0e14] lg:bg-transparent p-6 lg:p-0 overflow-y-auto lg:overflow-visible transition-transform duration-300 lg:transform-none shadow-2xl lg:shadow-none border-l lg:border-none border-white/10"
                             :class="
@@ -382,7 +385,6 @@ const clearFilters = () => {
                                             <div
                                                 class="absolute inset-0 w-0 bg-gradient-to-r from-red-600 to-rose-600 transition-all duration-[250ms] ease-out group-hover:w-full opacity-10"
                                             ></div>
-
                                             <span
                                                 class="relative flex items-center justify-center gap-2 text-sm font-bold text-red-500 group-hover:text-white transition-colors"
                                             >
@@ -453,7 +455,6 @@ const clearFilters = () => {
                                             }"
                                         />
                                     </button>
-
                                     <transition
                                         enter-active-class="transition ease-out duration-200"
                                         enter-from-class="opacity-0 -translate-y-2"
@@ -497,7 +498,6 @@ const clearFilters = () => {
                                             Price Range
                                         </h3>
                                     </div>
-
                                     <div
                                         class="relative w-full h-12 flex items-center justify-center"
                                     >
@@ -509,7 +509,6 @@ const clearFilters = () => {
                                                 :style="sliderStyle"
                                             ></div>
                                         </div>
-
                                         <input
                                             type="range"
                                             :min="0"
@@ -527,7 +526,6 @@ const clearFilters = () => {
                                             class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none z-20 range-thumb-custom"
                                         />
                                     </div>
-
                                     <div class="flex items-center gap-3 mt-2">
                                         <div
                                             class="bg-[#05070a] px-3 py-2 rounded-xl border border-white/10 w-1/2 flex flex-col items-start group hover:border-orange-500/30 transition-colors"
@@ -705,6 +703,141 @@ const clearFilters = () => {
                                 />
                             </div>
                         </div>
+
+                        <div
+                            v-if="shopProfile"
+                            class="mt-16 border-t border-white/10 pt-10"
+                        >
+                            <div
+                                class="bg-[#12141c] rounded-3xl p-8 border border-white/5 relative overflow-hidden group shadow-2xl"
+                            >
+                                <div
+                                    class="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"
+                                ></div>
+                                <div
+                                    class="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"
+                                ></div>
+
+                                <div
+                                    class="relative z-10 flex flex-col md:flex-row items-center gap-8"
+                                >
+                                    <div class="relative shrink-0">
+                                        <div
+                                            class="w-24 h-24 rounded-full border-2 border-white/10 bg-white p-1 overflow-hidden"
+                                        >
+                                            <img
+                                                :src="shopProfile.logo"
+                                                class="w-full h-full object-cover rounded-full"
+                                            />
+                                        </div>
+                                        <div
+                                            class="absolute bottom-0 right-0 bg-blue-500 text-white p-1.5 rounded-full border-2 border-[#12141c]"
+                                            title="Verified Seller"
+                                        >
+                                            <CheckBadgeIcon class="w-4 h-4" />
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="text-center md:text-left flex-1 space-y-3"
+                                    >
+                                        <div>
+                                            <div
+                                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2"
+                                            >
+                                                <BuildingStorefrontIcon
+                                                    class="w-3 h-3 text-orange-500"
+                                                />
+                                                Official Store
+                                            </div>
+                                            <h2
+                                                class="text-3xl font-black text-white"
+                                            >
+                                                {{ shopProfile.name }}
+                                            </h2>
+                                        </div>
+
+                                        <div
+                                            class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2 bg-[#05070a] px-3 py-1.5 rounded-lg border border-white/5"
+                                            >
+                                                <StarSolid
+                                                    class="w-4 h-4 text-yellow-400"
+                                                />
+                                                <div
+                                                    v-if="
+                                                        shopProfile.rating > 0
+                                                    "
+                                                >
+                                                    <span
+                                                        class="font-bold text-white"
+                                                        >{{
+                                                            shopProfile.rating
+                                                        }}</span
+                                                    >
+                                                    <span
+                                                        class="text-xs text-gray-500 ml-1"
+                                                        >({{
+                                                            shopProfile.total_reviews
+                                                        }}
+                                                        Reviews)</span
+                                                    >
+                                                </div>
+                                                <div v-else>
+                                                    <span
+                                                        class="font-bold text-gray-400 text-xs"
+                                                        >New Seller</span
+                                                    >
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="flex items-center gap-2 bg-[#05070a] px-3 py-1.5 rounded-lg border border-white/5"
+                                            >
+                                                <ShoppingBagIcon
+                                                    class="w-4 h-4 text-indigo-400"
+                                                />
+                                                <span
+                                                    class="font-bold text-white"
+                                                    >{{ products.total }}</span
+                                                >
+                                                Products
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-2 bg-[#05070a] px-3 py-1.5 rounded-lg border border-white/5"
+                                            >
+                                                <CalendarDaysIcon
+                                                    class="w-4 h-4 text-emerald-400"
+                                                />
+                                                Joined
+                                                <span class="text-white">{{
+                                                    shopProfile.joined
+                                                }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="shrink-0">
+                                        <Link
+                                            :href="
+                                                route(
+                                                    'vendor.show',
+                                                    shopProfile.id
+                                                )
+                                            "
+                                            class="bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition shadow-lg hover:scale-105 active:scale-95 duration-300 flex items-center gap-2"
+                                        >
+                                            Visit Store
+                                            <ArrowTrendingUpIcon
+                                                class="w-4 h-4"
+                                            />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </main>
                 </div>
             </div>
@@ -713,6 +846,7 @@ const clearFilters = () => {
 </template>
 
 <style scoped>
+/* Range Slider & Scrollbars Styles */
 .range-thumb-custom::-webkit-slider-thumb {
     pointer-events: auto;
     width: 20px;
@@ -726,11 +860,9 @@ const clearFilters = () => {
     margin-top: 0px;
     transition: transform 0.1s;
 }
-
 .range-thumb-custom::-webkit-slider-thumb:hover {
     transform: scale(1.2);
 }
-
 .range-thumb-custom::-moz-range-thumb {
     pointer-events: auto;
     width: 20px;
@@ -743,12 +875,10 @@ const clearFilters = () => {
     cursor: pointer;
     transition: transform 0.1s;
 }
-
 .mask-linear-fade {
     mask-image: linear-gradient(to right, black 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }
-
 .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
 }
@@ -762,12 +892,24 @@ const clearFilters = () => {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(234, 88, 12, 0.5);
 }
-
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
 }
 </style>

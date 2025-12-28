@@ -115,5 +115,6 @@ Route::get('/flash-sale/{id}', [FlashSaleController::class, 'show'])->name('flas
 
 // Shop Routes
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/store/{id}', [ShopController::class, 'vendorProfile'])->name('vendor.show');
 
 require __DIR__.'/auth.php';

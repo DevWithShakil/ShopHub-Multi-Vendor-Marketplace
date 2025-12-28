@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\Review;
 class Vendor extends Model
 {
     use HasFactory;
@@ -19,5 +19,11 @@ class Vendor extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function reviews()
+    {
+
+        return $this->hasManyThrough(Review::class, Product::class);
     }
 }
