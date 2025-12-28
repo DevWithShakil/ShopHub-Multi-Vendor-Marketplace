@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { router } from "@inertiajs/vue3";
 import {
     TicketIcon,
     ClipboardDocumentIcon,
@@ -17,13 +18,25 @@ const props = defineProps({
 
 const copiedId = ref(null);
 
+// Copy Function
 const copyCode = (code, id) => {
     navigator.clipboard.writeText(code);
     copiedId.value = id;
     setTimeout(() => (copiedId.value = null), 2000);
 };
 
-// 🎨 Premium Gradient Palettes for the "Stub" (Left Side)
+// Navigation Logic
+const navigateToStore = (promo) => {
+    if (promo.vendor_id) {
+        // Navigate to shop index with vendor_id filter
+        router.visit(route("shop.index", { vendor_id: promo.vendor_id }));
+    } else {
+        // Navigate to main shop index for global coupons
+        router.visit(route("shop.index"));
+    }
+};
+
+// Gradient Palettes for the "Stub" (Left Side)
 const gradients = [
     "bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600",
     "bg-gradient-to-br from-pink-500 via-rose-500 to-red-500",
@@ -73,7 +86,7 @@ const gradients = [
                     >
                 </h2>
                 <p class="text-gray-400 text-sm">
-                    Copy the code and apply at checkout to save big.
+                    Click on a voucher to visit the store.
                 </p>
             </div>
 
@@ -81,10 +94,11 @@ const gradients = [
                 <div
                     v-for="(promo, index) in promos"
                     :key="promo.id"
-                    class="group relative w-full filter drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:-translate-y-2"
+                    @click="navigateToStore(promo)"
+                    class="group relative w-full filter drop-shadow-xl hover:drop-shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer"
                 >
                     <div
-                        class="relative w-full h-44 flex rounded-2xl overflow-hidden"
+                        class="relative w-full h-44 flex rounded-2xl overflow-hidden bg-white"
                     >
                         <div
                             class="relative w-[35%] h-full flex flex-col items-center justify-center p-4 text-white z-10"
@@ -95,15 +109,20 @@ const gradients = [
                             ></div>
 
                             <div
-                                class="relative z-10 flex flex-col items-center"
+                                class="relative z-10 flex flex-col items-center text-center"
                             >
                                 <h3
-                                    class="text-5xl font-black leading-none drop-shadow-md"
+                                    class="text-4xl lg:text-5xl font-black leading-none drop-shadow-md"
                                 >
                                     {{ parseInt(promo.value)
-                                    }}<span class="text-2xl align-top">{{
-                                        promo.type === "percentage" ? "%" : "৳"
-                                    }}</span>
+                                    }}<span
+                                        class="text-xl lg:text-2xl align-top"
+                                        >{{
+                                            promo.type === "percentage"
+                                                ? "%"
+                                                : "৳"
+                                        }}</span
+                                    >
                                 </h3>
                                 <span
                                     class="text-sm font-bold opacity-90 tracking-widest mt-1"
@@ -120,7 +139,7 @@ const gradients = [
                         </div>
 
                         <div
-                            class="relative w-[65%] h-full bg-white flex flex-col justify-between p-5 pl-7"
+                            class="relative w-[65%] h-full bg-white flex flex-col justify-between p-4 pl-6 transition-colors group-hover:bg-gray-50"
                         >
                             <div
                                 class="absolute top-2 bottom-2 left-0 w-[2px] border-l-2 border-dashed border-gray-300 z-20"
@@ -135,11 +154,13 @@ const gradients = [
 
                             <div>
                                 <div
-                                    class="flex justify-between items-start mb-3"
+                                    class="flex justify-between items-start mb-2"
                                 >
-                                    <div class="flex items-center gap-2">
+                                    <div
+                                        class="flex items-center gap-2 overflow-hidden"
+                                    >
                                         <div
-                                            class="w-8 h-8 rounded-full bg-gray-100 p-0.5 border border-gray-200 shadow-sm overflow-hidden"
+                                            class="w-8 h-8 flex-shrink-0 rounded-full bg-gray-100 p-0.5 border border-gray-200 shadow-sm overflow-hidden"
                                         >
                                             <img
                                                 v-if="promo.vendor_logo"
@@ -151,16 +172,18 @@ const gradients = [
                                                 class="w-full h-full p-1.5 text-gray-400"
                                             />
                                         </div>
-                                        <div class="flex flex-col">
+                                        <div
+                                            class="flex flex-col overflow-hidden"
+                                        >
                                             <span
-                                                class="text-sm font-bold text-gray-800 truncate w-24"
+                                                class="text-sm font-bold text-gray-800 truncate"
                                                 :title="promo.vendor_name"
                                                 >{{ promo.vendor_name }}</span
                                             >
                                         </div>
                                     </div>
                                     <div
-                                        class="bg-red-50 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded-full border border-red-100"
+                                        class="bg-red-50 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded-full border border-red-100 whitespace-nowrap"
                                     >
                                         LIMITED
                                     </div>
@@ -176,24 +199,26 @@ const gradients = [
                                 </p>
                             </div>
 
-                            <div class="mt-auto">
+                            <div class="mt-auto relative z-20">
                                 <button
-                                    @click="copyCode(promo.code, promo.id)"
-                                    class="w-full group/btn relative flex items-center justify-between bg-gray-50 hover:bg-gray-900 border border-gray-200 hover:border-gray-900 text-gray-900 hover:text-white rounded-lg px-4 py-2.5 transition-all duration-300"
+                                    @click.stop="copyCode(promo.code, promo.id)"
+                                    class="w-full group/btn relative flex items-center justify-between bg-gray-50 hover:bg-gray-900 border border-gray-200 hover:border-gray-900 text-gray-900 hover:text-white rounded-lg px-3 py-2 transition-all duration-300"
                                 >
-                                    <div class="flex flex-col items-start">
+                                    <div
+                                        class="flex flex-col items-start overflow-hidden"
+                                    >
                                         <span
                                             class="text-[9px] font-bold uppercase opacity-50 tracking-wider"
                                             >Coupon Code</span
                                         >
                                         <span
-                                            class="font-mono font-bold text-lg tracking-wider"
+                                            class="font-mono font-bold text-base lg:text-lg tracking-wider truncate w-full text-left"
                                             >{{ promo.code }}</span
                                         >
                                     </div>
 
                                     <div
-                                        class="w-8 h-8 flex items-center justify-center rounded-md bg-white text-gray-900 shadow-sm group-hover/btn:bg-white/20 group-hover/btn:text-white transition-all"
+                                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-md bg-white text-gray-900 shadow-sm group-hover/btn:bg-white/20 group-hover/btn:text-white transition-all"
                                     >
                                         <CheckIcon
                                             v-if="copiedId === promo.id"
@@ -207,7 +232,7 @@ const gradients = [
 
                                     <span
                                         v-if="copiedId === promo.id"
-                                        class="absolute inset-0 flex items-center justify-center bg-green-500 text-white font-bold rounded-lg animate-fade-in text-sm tracking-widest"
+                                        class="absolute inset-0 flex items-center justify-center bg-green-500 text-white font-bold rounded-lg animate-fade-in text-sm tracking-widest z-30"
                                     >
                                         COPIED!
                                     </span>
@@ -215,10 +240,6 @@ const gradients = [
                             </div>
                         </div>
                     </div>
-
-                    <div
-                        class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10"
-                    ></div>
                 </div>
             </div>
         </div>

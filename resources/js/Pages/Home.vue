@@ -1,6 +1,6 @@
 <script setup>
-import { Head } from "@inertiajs/vue3";
 import { ref } from "vue";
+import { Head } from "@inertiajs/vue3";
 
 // --- Layout & Components ---
 import MainLayout from "@/Layouts/MainLayout.vue";
@@ -16,8 +16,8 @@ import BrandMarquee from "@/Components/Sections/BrandMarquee.vue";
 import Testimonials from "@/Components/Sections/Testimonials.vue";
 import FAQSection from "@/Components/Sections/FAQSection.vue";
 import ActivePromos from "@/Components/Sections/ActivePromos.vue";
-import PromoPopup from "@/Components/Popups/PromoPopup.vue";
 import RecentlyViewed from "@/Components/Sections/RecentlyViewed.vue";
+import PromoPopup from "@/Components/Popups/PromoPopup.vue";
 
 // --- Icons ---
 import {
@@ -36,10 +36,10 @@ const props = defineProps({
     flashSale: Object,
     brands: Array,
     testimonials: Array,
-    activePromos: Array, // ✅ ১. এই লাইনটি যোগ করতে হবে
+    activePromos: Array,
 });
 
-// --- 🔔 Toast Logic ---
+// --- Toast Logic ---
 const toastMessage = ref(null);
 const toastType = ref("success");
 
@@ -55,7 +55,7 @@ const showToast = (message, type = "success") => {
 <template>
     <Head title="Home - ShopHub" />
 
-    <PromoPopup />
+    <PromoPopup :promos="activePromos" />
 
     <transition
         enter-active-class="transform ease-out duration-300 transition"
@@ -108,20 +108,19 @@ const showToast = (message, type = "success") => {
         <HeroSlider :slides="slides" />
 
         <FlashSaleSection v-if="flashSale" :saleData="flashSale" />
+
         <ActivePromos :promos="activePromos" />
 
         <div class="bg-[#0B0F19] pt-10 pb-4">
             <div class="container mx-auto px-4 lg:px-8 space-y-24">
                 <NewArrivals :products="newArrivals" />
-
                 <BestSellers :products="bestSellers" />
-
                 <TopRated :products="topRated" />
+
                 <PromoBanner />
                 <ServiceFeatures />
 
                 <BrandMarquee :brands="brands" />
-
                 <Testimonials :testimonials="testimonials" />
 
                 <FAQSection />

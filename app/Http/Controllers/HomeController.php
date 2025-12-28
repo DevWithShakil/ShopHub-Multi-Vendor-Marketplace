@@ -160,6 +160,7 @@ class HomeController extends Controller
                     'vendor_name' => $promo->vendor ? $promo->vendor->shop_name : 'Global',
                     'vendor_logo' => $promo->vendor ? asset('storage/'.$promo->vendor->logo) : null,
                     'expires_at' => $promo->end_date,
+                    'vendor_id' => $promo->vendor ? $promo->vendor->id : null,
                 ];
             });
         return Inertia::render('Home', [
@@ -199,7 +200,30 @@ class HomeController extends Controller
 
         return response()->json($products);
     }
+public function offers()
+{
+    $promos = PromoCode::with('vendor')
+        ->where('is_active', true)
+        ->whereDate('end_date', '>=', now())
+        ->latest()
+        ->get()
+        ->map(function ($promo) {
+            return [
+                'id' => $promo->id,
+                'code' => $promo->code,
+                'type' => $promo->type,
+                'value' => $promo->value,
+                'vendor_name' => $promo->vendor ? $promo->vendor->shop_name : 'ShopHub Official',
+                'vendor_logo' => $promo->vendor ? asset('storage/'.$promo->vendor->logo) : null,
+                'vendor_id' => $promo->vendor ? $promo->vendor->id : null,
+                'expires_at' => $promo->end_date,
+            ];
+        });
 
+    return Inertia::render('Offers', [
+        'promos' => $promos
+    ]);
+}
 
 
     public function trackOrder(Request $request)

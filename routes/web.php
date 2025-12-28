@@ -12,6 +12,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FlashSaleController;
+use App\Http\Controllers\ShopController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -92,9 +93,8 @@ Route::get('/api/search', [HomeController::class, 'search'])->name('api.search')
 // Track Order Page
 Route::match(['get', 'post'], '/track-order', [HomeController::class, 'trackOrder'])->name('track.order');
 
-Route::get('/offers', function () {
-    return Inertia::render('Offers');
-})->name('offers.index');
+// Offers Page Route
+Route::get('/offers', [HomeController::class, 'offers'])->name('offers.index');
 
 // Contact Page View
 Route::get('/contact', function () {
@@ -112,5 +112,8 @@ Route::get('/become-a-vendor', function () {
 Route::post('/vendor-store', [VendorController::class, 'store'])->name('vendor.store');
 
 Route::get('/flash-sale/{id}', [FlashSaleController::class, 'show'])->name('flash-sale.show');
+
+// Shop Routes
+Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 require __DIR__.'/auth.php';

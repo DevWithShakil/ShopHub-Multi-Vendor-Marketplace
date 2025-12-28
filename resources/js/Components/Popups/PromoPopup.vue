@@ -1,119 +1,127 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted } from "vue";
 import { Link } from "@inertiajs/vue3";
-import { XMarkIcon, GiftIcon, ArrowRightIcon } from "@heroicons/vue/24/solid";
+import {
+    SparklesIcon,
+    XMarkIcon,
+    GiftIcon,
+    TicketIcon,
+    StarIcon,
+} from "@heroicons/vue/24/solid";
 
-const isVisible = ref(false);
-let popupTimer = null;
+const props = defineProps({
+    promos: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const showPopup = ref(false);
 
 onMounted(() => {
-    // 🔥 Change: localStorage ব্যবহার করা হয়েছে (Long term memory)
-    const hasSeenPopup = localStorage.getItem("seenPromoPopup");
+    // সেশন চেক: আগে দেখা হয়েছে কিনা
+    const hasSeen = sessionStorage.getItem("shophub_promo_seen");
 
-    if (!hasSeenPopup) {
-        // ৫ সেকেন্ড পর পপআপ আসবে
-        popupTimer = setTimeout(() => {
-            isVisible.value = true;
-        }, 5000);
+    if (!hasSeen && props.promos.length > 0) {
+        setTimeout(() => {
+            showPopup.value = true;
+            // একবার দেখালে আর দেখাবে না
+            sessionStorage.setItem("shophub_promo_seen", "true");
+        }, 1000);
     }
 });
 
-onUnmounted(() => {
-    if (popupTimer) clearTimeout(popupTimer);
-});
-
 const closePopup = () => {
-    isVisible.value = false;
-    // 🔥 Change: localStorage এ সেভ হচ্ছে
-    localStorage.setItem("seenPromoPopup", "true");
+    showPopup.value = false;
 };
 </script>
 
 <template>
-    <transition
-        enter-active-class="transition duration-500 cubic-bezier(0.16, 1, 0.3, 1)"
-        enter-from-class="opacity-0 translate-y-10 scale-95"
-        enter-to-class="opacity-100 translate-y-0 scale-100"
-        leave-active-class="transition duration-300 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-    >
+    <transition name="modal">
         <div
-            v-if="isVisible"
+            v-if="showPopup"
             class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
         >
             <div
+                class="absolute inset-0 bg-[#000000]/80 backdrop-blur-sm transition-opacity duration-500"
                 @click="closePopup"
-                class="absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity"
             ></div>
 
             <div
-                class="relative w-full max-w-[380px] bg-[#1A1F2E] border border-yellow-500/30 rounded-3xl shadow-2xl overflow-hidden group"
+                class="relative w-full max-w-md transform transition-all duration-300 scale-100"
             >
-                <button
-                    @click="closePopup"
-                    class="absolute top-3 right-3 p-1.5 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 rounded-full transition-colors z-20 cursor-pointer"
-                >
-                    <XMarkIcon class="w-4 h-4" />
-                </button>
-
                 <div
-                    class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-500/20 blur-[50px] pointer-events-none"
+                    class="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur opacity-70 animate-pulse"
                 ></div>
 
-                <div class="p-6 pt-8 text-center relative z-10">
-                    <div class="mb-4 relative inline-block">
+                <div
+                    class="relative bg-[#12141c] rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+                >
+                    <div
+                        class="relative h-32 bg-gradient-to-br from-purple-900 to-[#12141c] overflow-hidden flex items-center justify-center"
+                    >
                         <div
-                            class="absolute inset-0 bg-yellow-500 blur-xl opacity-20 animate-pulse"
+                            class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-overlay"
                         ></div>
                         <div
-                            class="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 rotate-3 group-hover:rotate-6 transition-transform duration-500 animate-float"
+                            class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl rotate-12 flex items-center justify-center shadow-2xl shadow-purple-500/50 relative z-10 animate-float"
                         >
-                            <GiftIcon class="w-8 h-8 text-white" />
+                            <GiftIcon
+                                class="w-10 h-10 text-white drop-shadow-md"
+                            />
                         </div>
-                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
-                            ></span>
-                            <span
-                                class="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-[#1A1F2E]"
-                            ></span>
-                        </span>
+                        <SparklesIcon
+                            class="absolute top-6 left-12 w-6 h-6 text-yellow-400 animate-ping opacity-75"
+                        />
+                        <StarIcon
+                            class="absolute bottom-8 right-12 w-5 h-5 text-blue-400 animate-bounce opacity-75"
+                        />
                     </div>
 
-                    <h3
-                        class="text-2xl font-black text-white leading-tight mb-1"
-                    >
-                        Wait! Before You Go
-                    </h3>
-                    <p
-                        class="text-yellow-400 font-bold text-sm uppercase tracking-widest mb-3"
-                    >
-                        You have a gift inside!
-                    </p>
-                    <p class="text-gray-400 text-xs leading-relaxed px-4 mb-6">
-                        Claim your
-                        <span class="text-white font-bold">Free Shipping</span>
-                        &
-                        <span class="text-white font-bold"
-                            >Extra Discounts</span
+                    <div class="p-8 text-center">
+                        <h3
+                            class="text-3xl font-black text-white mb-2 tracking-tight flex items-center justify-center gap-2"
                         >
-                        on your first order.
-                    </p>
+                            You're Lucky!
+                            <SparklesIcon
+                                class="w-8 h-8 text-yellow-500 animate-spin-slow"
+                            />
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-8 leading-relaxed">
+                            We found
+                            <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-bold text-lg"
+                                >{{ promos.length }}</span
+                            >
+                            hidden discount codes for you. Don't let them
+                            expire!
+                        </p>
 
-                    <Link
-                        :href="route('offers.index')"
-                        class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-[#1A1F2E] font-black py-3.5 rounded-xl shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
-                    >
-                        <span>Reveal My Gift</span>
-                        <ArrowRightIcon class="w-4 h-4" />
-                    </Link>
+                        <div class="space-y-3">
+                            <Link
+                                :href="route('offers.index')"
+                                class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                            >
+                                <TicketIcon
+                                    class="w-5 h-5 group-hover:rotate-12 transition-transform"
+                                />
+                                Collect Vouchers
+                            </Link>
+
+                            <button
+                                @click="closePopup"
+                                class="w-full py-3 text-sm text-gray-500 font-medium hover:text-white transition-colors"
+                            >
+                                Maybe Later
+                            </button>
+                        </div>
+                    </div>
 
                     <button
                         @click="closePopup"
-                        class="mt-3 text-[10px] text-gray-500 hover:text-gray-300 transition decoration-gray-600 hover:underline cursor-pointer"
+                        class="absolute top-4 right-4 p-2 bg-black/20 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-all backdrop-blur-md"
                     >
-                        No thanks, I don't want discounts
+                        <XMarkIcon class="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -122,17 +130,45 @@ const closePopup = () => {
 </template>
 
 <style scoped>
-/* 🎈 Gentle Float Animation */
+/* Animations from Offers.vue */
 @keyframes float {
     0%,
     100% {
-        transform: translateY(0) rotate(3deg);
+        transform: translateY(0) rotate(12deg);
     }
     50% {
-        transform: translateY(-6px) rotate(3deg);
+        transform: translateY(-10px) rotate(12deg);
     }
 }
 .animate-float {
     animation: float 3s ease-in-out infinite;
+}
+.animate-spin-slow {
+    animation: spin 3s linear infinite;
+}
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+/* Transitions */
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+.modal-enter-active .transform,
+.modal-leave-active .transform {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-enter-from .transform,
+.modal-leave-to .transform {
+    transform: scale(0.9);
 }
 </style>
