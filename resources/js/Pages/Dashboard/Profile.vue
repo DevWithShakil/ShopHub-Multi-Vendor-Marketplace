@@ -8,27 +8,39 @@ import {
     CheckCircleIcon,
     XCircleIcon,
     XMarkIcon,
+    CameraIcon, // ✅ New Icon
 } from "@heroicons/vue/24/outline";
 import { ref } from "vue";
 
+defineProps({
+    mustVerifyEmail: Boolean,
+    status: String,
+});
+
 const user = usePage().props.auth.user;
 
-// ✅ Toast State (Only for Success)
+// ✅ Refs for Photo Upload
+const photoInput = ref(null);
+const photoPreview = ref(null);
+
+// ✅ Toast State
 const toastMessage = ref(null);
 const toastType = ref("success");
 
-const showToast = (message) => {
+const showToast = (message, type = "success") => {
     toastMessage.value = message;
-    toastType.value = "success"; // Always success for toast
+    toastType.value = type;
     setTimeout(() => {
         toastMessage.value = null;
     }, 4000);
 };
 
-// Form: Personal Info
+// Form: Profile Info (Updated for File Upload)
 const formInfo = useForm({
+    _method: "PATCH", // ✅ Important for File Upload via POST
     name: user.name,
     email: user.email,
+    photo: null, // ✅ Photo Field
 });
 
 // Form: Password
@@ -38,60 +50,53 @@ const formPassword = useForm({
     password_confirmation: "",
 });
 
-// ✅ Update Info Logic (Strict Validation)
+// ✅ Image Selection Logic
+const selectNewPhoto = () => {
+    photoInput.value.click();
+};
+
+const updatePhotoPreview = () => {
+    const photo = photoInput.value.files[0];
+
+    if (!photo) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(photo);
+
+    formInfo.photo = photo;
+};
+
+// ✅ Update Profile Info
 const updateInfo = () => {
     formInfo.clearErrors();
 
-    let hasError = false;
-
-    // 1. Check if Name is same
-    if (formInfo.name === user.name) {
-        formInfo.setError("name", "You have entered the same name as before.");
-        hasError = true;
-    }
-
-    // 2. Check if Email is same
-    // if (formInfo.email === user.email) {
-    //     formInfo.setError(
-    //         "email",
-    //         "You have entered the same email as before."
-    //     );
-    //     hasError = false;
-    // }
-
-    if (hasError) {
-        return;
-    }
-
-    // 3. Submit if valid changes exist
-    formInfo.patch(route("profile.update"), {
+    // Use POST method for file upload (spoofed as PATCH)
+    formInfo.post(route("profile.update"), {
         preserveScroll: true,
         onSuccess: () => {
-            showToast("Profile updated successfully!");
+            showToast("Profile updated successfully!", "success");
+            // Clear file input
+            if (photoInput.value) {
+                photoInput.value.value = null;
+            }
         },
-        onError: () => {},
+        onError: () => {
+            showToast(
+                "Failed to update profile. Please check inputs.",
+                "error"
+            );
+        },
     });
 };
 
-// ✅ Update Password Logic (Strict Validation)
+// ✅ Update Password Logic
 const updatePassword = () => {
     formPassword.clearErrors();
     let hasError = false;
 
-    // 1. Check if Current & New Password are SAME
-    if (
-        formPassword.current_password &&
-        formPassword.password &&
-        formPassword.current_password === formPassword.password
-    ) {
-        formPassword.setError(
-            "password",
-            "New password cannot be the same as current password."
-        );
-        hasError = true;
-    }
-
-    // 2. Check Confirm Password Match
     if (formPassword.password !== formPassword.password_confirmation) {
         formPassword.setError(
             "password_confirmation",
@@ -100,25 +105,15 @@ const updatePassword = () => {
         hasError = true;
     }
 
-    // 3. Check Minimum Length
-    if (formPassword.password && formPassword.password.length < 8) {
-        formPassword.setError(
-            "password",
-            "Password must be at least 8 characters."
-        );
-        hasError = true;
-    }
-
     if (hasError) return;
 
-    // 4. Submit
     formPassword.put(route("password.update"), {
         preserveScroll: true,
         onSuccess: () => {
             formPassword.reset();
-            showToast("Password changed successfully!");
+            showToast("Password changed successfully!", "success");
         },
-        onError: (errors) => {},
+        onError: () => {},
     });
 };
 </script>
@@ -136,19 +131,40 @@ const updatePassword = () => {
     >
         <div
             v-if="toastMessage"
-            class="fixed bottom-10 right-6 z-[9999] max-w-sm w-full border border-green-500/20 bg-[#1A1F2E] border-l-4 border-l-green-500 shadow-2xl rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl animate-pulse-slow"
+            class="fixed bottom-6 right-6 z-[100] max-w-sm w-full border shadow-2xl rounded-2xl p-4 flex items-center gap-4 backdrop-blur-xl border-l-4 animate-pulse-slow"
+            :class="
+                toastType === 'success'
+                    ? 'bg-[#1A1F2E] border-green-500/20 border-l-green-500'
+                    : 'bg-[#1A1F2E] border-red-500/20 border-l-red-500'
+            "
         >
             <div
-                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1 bg-green-500/10 ring-green-500/20"
+                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner ring-1"
+                :class="
+                    toastType === 'success'
+                        ? 'bg-green-500/10 ring-green-500/20'
+                        : 'bg-red-500/10 ring-red-500/20'
+                "
             >
-                <CheckCircleIcon class="w-6 h-6 text-green-400" />
+                <CheckCircleIcon
+                    v-if="toastType === 'success'"
+                    class="w-6 h-6 text-green-400"
+                />
+                <XCircleIcon v-else class="w-6 h-6 text-red-400" />
             </div>
 
             <div class="flex-1">
                 <h4 class="font-bold text-sm tracking-wide text-white">
-                    Success!
+                    {{ toastType === "success" ? "Success!" : "Error!" }}
                 </h4>
-                <p class="text-xs mt-0.5 font-medium text-green-200/70">
+                <p
+                    class="text-xs mt-0.5 font-medium"
+                    :class="
+                        toastType === 'success'
+                            ? 'text-green-200/70'
+                            : 'text-red-200/70'
+                    "
+                >
                     {{ toastMessage }}
                 </p>
             </div>
@@ -208,7 +224,7 @@ const updatePassword = () => {
                                 <p class="text-sm text-gray-400">
                                     {{
                                         __(
-                                            "Update your name and email address."
+                                            "Update your name, email address, and profile photo."
                                         )
                                     }}
                                 </p>
@@ -219,6 +235,81 @@ const updatePassword = () => {
                             @submit.prevent="updateInfo"
                             class="grid grid-cols-1 md:grid-cols-2 gap-6"
                         >
+                            <div
+                                class="col-span-1 md:col-span-2 flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-4"
+                            >
+                                <div
+                                    class="relative group cursor-pointer"
+                                    @click="selectNewPhoto"
+                                >
+                                    <input
+                                        ref="photoInput"
+                                        type="file"
+                                        class="hidden"
+                                        accept="image/*"
+                                        @change="updatePhotoPreview"
+                                    />
+
+                                    <div
+                                        class="w-24 h-24 rounded-full border-4 border-white/10 overflow-hidden shadow-xl bg-[#1A1F2E] flex items-center justify-center"
+                                    >
+                                        <img
+                                            v-if="photoPreview"
+                                            :src="photoPreview"
+                                            class="w-full h-full object-cover"
+                                        />
+                                        <img
+                                            v-else-if="user.profile_photo_url"
+                                            :src="user.profile_photo_url"
+                                            class="w-full h-full object-cover"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-4xl font-bold text-white"
+                                            >{{
+                                                user.name
+                                                    .charAt(0)
+                                                    .toUpperCase()
+                                            }}</span
+                                        >
+                                    </div>
+
+                                    <div
+                                        class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                    >
+                                        <CameraIcon
+                                            class="w-8 h-8 text-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="flex flex-col justify-center text-center sm:text-left"
+                                >
+                                    <h3
+                                        class="text-white font-bold text-lg mb-1"
+                                    >
+                                        Profile Photo
+                                    </h3>
+                                    <p class="text-sm text-gray-400 mb-3">
+                                        Click on the image to upload a new one.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        @click="selectNewPhoto"
+                                        class="text-sm text-indigo-400 hover:text-indigo-300 font-bold border border-indigo-500/30 px-4 py-2 rounded-lg hover:bg-indigo-500/10 transition w-fit mx-auto sm:mx-0"
+                                    >
+                                        Select New Photo
+                                    </button>
+                                    <p
+                                        v-if="formInfo.errors.photo"
+                                        class="text-rose-500 text-xs mt-2 font-bold"
+                                    >
+                                        {{ formInfo.errors.photo }}
+                                    </p>
+                                </div>
+                            </div>
+
                             <div class="col-span-1 md:col-span-2">
                                 <label
                                     class="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider"
@@ -229,14 +320,10 @@ const updatePassword = () => {
                                     type="text"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
                                     placeholder="John Doe"
-                                    :class="{
-                                        'border-rose-500 focus:ring-rose-500':
-                                            formInfo.errors.name,
-                                    }"
                                 />
                                 <p
                                     v-if="formInfo.errors.name"
-                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
+                                    class="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1"
                                 >
                                     <XCircleIcon class="w-4 h-4" />
                                     {{ formInfo.errors.name }}
@@ -253,14 +340,10 @@ const updatePassword = () => {
                                     type="email"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none placeholder-gray-600"
                                     placeholder="john@example.com"
-                                    :class="{
-                                        'border-rose-500 focus:ring-rose-500':
-                                            formInfo.errors.email,
-                                    }"
                                 />
                                 <p
                                     v-if="formInfo.errors.email"
-                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
+                                    class="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1"
                                 >
                                     <XCircleIcon class="w-4 h-4" />
                                     {{ formInfo.errors.email }}
@@ -327,17 +410,11 @@ const updatePassword = () => {
                                     v-model="formPassword.current_password"
                                     type="password"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
-                                    :class="{
-                                        'border-rose-500 focus:ring-rose-500':
-                                            formPassword.errors
-                                                .current_password,
-                                    }"
                                 />
                                 <p
                                     v-if="formPassword.errors.current_password"
-                                    class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
+                                    class="text-rose-500 text-xs mt-1 font-bold"
                                 >
-                                    <XCircleIcon class="w-4 h-4" />
                                     {{ formPassword.errors.current_password }}
                                 </p>
                             </div>
@@ -352,16 +429,11 @@ const updatePassword = () => {
                                         v-model="formPassword.password"
                                         type="password"
                                         class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
-                                        :class="{
-                                            'border-rose-500 focus:ring-rose-500':
-                                                formPassword.errors.password,
-                                        }"
                                     />
                                     <p
                                         v-if="formPassword.errors.password"
-                                        class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
+                                        class="text-rose-500 text-xs mt-1 font-bold"
                                     >
-                                        <XCircleIcon class="w-4 h-4" />
                                         {{ formPassword.errors.password }}
                                     </p>
                                 </div>
@@ -376,25 +448,7 @@ const updatePassword = () => {
                                         "
                                         type="password"
                                         class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition outline-none placeholder-gray-600"
-                                        :class="{
-                                            'border-rose-500 focus:ring-rose-500':
-                                                formPassword.errors
-                                                    .password_confirmation,
-                                        }"
                                     />
-                                    <p
-                                        v-if="
-                                            formPassword.errors
-                                                .password_confirmation
-                                        "
-                                        class="text-rose-500 text-xs mt-2 font-bold animate-pulse flex items-center gap-1"
-                                    >
-                                        <XCircleIcon class="w-4 h-4" />
-                                        {{
-                                            formPassword.errors
-                                                .password_confirmation
-                                        }}
-                                    </p>
                                 </div>
                             </div>
 

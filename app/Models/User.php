@@ -9,12 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
-// use Spatie\Permission\Traits\HasRoles; // ✅ যদি Spatie ব্যবহার না করেন, এটি অফ রাখুন
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable;
-    // use HasRoles; // ✅ Spatie টেবিল মাইগ্রেশন না থাকলে এটি কমেন্ট করে রাখুন
 
     /**
      * The attributes that are mass assignable.
@@ -25,9 +24,10 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'role', // admin, vendor, customer
+        'role',
         'phone',
         'address',
+        'profile_photo_path',
     ];
 
     /**
@@ -51,6 +51,34 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'profile_photo_url',
+    ];
+
+    // ==========================================
+    // 🖼️ Accessors (Virtual Attributes)
+    // ==========================================
+
+    /**
+     * Get the URL to the user's profile photo.
+     *
+     * @return string
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+
+        if ($this->profile_photo_path) {
+            return asset('storage/' . $this->profile_photo_path);
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
     }
 
     // ==========================================
@@ -87,17 +115,11 @@ class User extends Authenticatable implements FilamentUser
     // 🛠️ Helper Methods (Role Checks)
     // ==========================================
 
-    /**
-     * ✅ Fix: Custom hasRole method
-     * এটি Spatie প্যাকেজ ছাড়াই রোল চেক করতে সাহায্য করবে
-     */
     public function hasRole($role)
     {
-        // যদি অ্যারে পাস করা হয় (যেমন: ['admin', 'vendor'])
         if (is_array($role)) {
             return in_array($this->role, $role);
         }
-        // যদি সিঙ্গেল স্ট্রিং হয়
         return $this->role === $role;
     }
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FlashSaleController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -39,7 +40,7 @@ Route::get('/language/{locale}', function ($locale) {
     return back();
 })->name('language.switch');
 
-// SSLCommerz Callback Routes (CSRF Excluded in bootstrap/app.php)
+// SSLCommerz Callback Routes
 Route::post('/pay/success', [PaymentController::class, 'success'])->name('payment.success');
 Route::post('/pay/fail', [PaymentController::class, 'fail'])->name('payment.fail');
 Route::post('/pay/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
@@ -63,19 +64,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
-    // User Dashboard Routes
+    // --- User Dashboard Routes ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/orders', [DashboardController::class, 'orders'])->name('dashboard.orders'); //user.orders
-    Route::get('/dashboard/profile', [DashboardController::class, 'profile'])->name('dashboard.profile');
+    Route::get('/dashboard/orders', [DashboardController::class, 'orders'])->name('dashboard.orders');
 
-    // Profile & Password Update
-    Route::post('/dashboard/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update.info');
-    Route::post('/dashboard/password/update', [DashboardController::class, 'updatePassword'])->name('profile.update.password');
+    // ✅ Profile Page Render (Using 'profile.edit' to match Sidebar)
+    Route::get('/dashboard/profile', [DashboardController::class, 'profile'])->name('profile.edit');
 
-    // Default Laravel Breeze/Jetstream Profile Routes (Optional)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // ✅ Profile Update (Info & Photo) - Points to DashboardController
+    Route::patch('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('profile.update');
+
+    // ✅ Password Update - Points to DashboardController
+    Route::put('/dashboard/password', [DashboardController::class, 'updatePassword'])->name('password.update');
+
+
+    // ⚠️ Note: I commented out default Breeze routes below to avoid conflict with your custom DashboardController logic.
+    // If you ever need the default ProfileController, un-comment them and rename your custom routes above.
+
+    /* Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit.breeze');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update.breeze');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    */
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -84,7 +93,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/invoice/{id}', [InvoiceController::class, 'download'])->name('invoice.download');
     Route::post('/coupon/apply', [CartController::class, 'applyCoupon'])->name('coupon.apply');
     Route::delete('/coupon/remove', [CartController::class, 'removeCoupon'])->name('coupon.remove');
-
 });
 
 // API Search Route

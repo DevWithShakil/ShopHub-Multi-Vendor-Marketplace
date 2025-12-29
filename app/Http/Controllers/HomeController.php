@@ -213,7 +213,7 @@ public function offers()
                 'code' => $promo->code,
                 'type' => $promo->type,
                 'value' => $promo->value,
-                'vendor_name' => $promo->vendor ? $promo->vendor->shop_name : 'ShopHub Official',
+                'vendor_name' => $promo->vendor ? $promo->vendor->shop_name : 'Global',
                 'vendor_logo' => $promo->vendor ? asset('storage/'.$promo->vendor->logo) : null,
                 'vendor_id' => $promo->vendor ? $promo->vendor->id : null,
                 'expires_at' => $promo->end_date,

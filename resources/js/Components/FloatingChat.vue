@@ -71,37 +71,60 @@ const toggleMenu = () => {
             </div>
         </transition>
 
-        <button
-            @click="toggleMenu"
-            class="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 relative overflow-hidden group"
-            :class="
-                isOpen ? 'bg-red-500 rotate-90' : 'bg-white hover:bg-gray-100'
-            "
-        >
-            <div
-                class="absolute transition-all duration-300"
-                :class="
-                    isOpen
-                        ? 'opacity-0 rotate-90 scale-50'
-                        : 'opacity-100 scale-100'
-                "
+        <div class="flex items-center gap-3">
+            <transition
+                enter-active-class="transition duration-300 ease-out"
+                enter-from-class="opacity-0 translate-x-2"
+                enter-to-class="opacity-100 translate-x-0"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="opacity-100 translate-x-0"
+                leave-to-class="opacity-0 translate-x-2"
             >
-                <ChatBubbleOvalLeftEllipsisIcon
-                    class="w-7 h-7 text-indigo-600 animate-bounce-slow"
-                />
-            </div>
+                <div
+                    v-if="!isOpen"
+                    class="bg-white px-4 py-2 rounded-full shadow-lg shadow-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                    @click="toggleMenu"
+                >
+                    <span class="text-sm font-bold text-gray-700"
+                        >Need Help?</span
+                    >
+                </div>
+            </transition>
 
-            <div
-                class="absolute transition-all duration-300"
+            <button
+                @click="toggleMenu"
+                class="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 relative overflow-hidden group"
                 :class="
                     isOpen
-                        ? 'opacity-100 rotate-0 scale-100'
-                        : 'opacity-0 -rotate-90 scale-50'
+                        ? 'bg-red-500 rotate-90'
+                        : 'bg-white hover:bg-gray-100'
                 "
             >
-                <XMarkIcon class="w-7 h-7 text-white" />
-            </div>
-        </button>
+                <div
+                    class="absolute transition-all duration-300"
+                    :class="
+                        isOpen
+                            ? 'opacity-0 rotate-90 scale-50'
+                            : 'opacity-100 scale-100'
+                    "
+                >
+                    <ChatBubbleOvalLeftEllipsisIcon
+                        class="w-7 h-7 text-indigo-600 animate-bounce-slow"
+                    />
+                </div>
+
+                <div
+                    class="absolute transition-all duration-300"
+                    :class="
+                        isOpen
+                            ? 'opacity-100 rotate-0 scale-100'
+                            : 'opacity-0 -rotate-90 scale-50'
+                    "
+                >
+                    <XMarkIcon class="w-7 h-7 text-white" />
+                </div>
+            </button>
+        </div>
     </div>
 </template>
 

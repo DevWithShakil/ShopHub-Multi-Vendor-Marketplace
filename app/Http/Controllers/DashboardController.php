@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Storage; //
 
 use Inertia\Inertia;
 
@@ -20,13 +21,13 @@ class DashboardController extends Controller
         $stats = [
             'total_orders' => Order::where('user_id', $userId)->count(),
             'pending_orders' => Order::where('user_id', $userId)->where('status', 'pending')->count(),
-        'completed_orders' => Order::where('user_id', $userId)
-            ->whereIn('status', ['delivered', 'completed'])
-            ->count(),
+            'completed_orders' => Order::where('user_id', $userId)
+                ->whereIn('status', ['delivered', 'completed'])
+                ->count(),
 
-        'total_spend' => Order::where('user_id', $userId)
-            ->whereIn('status', ['delivered', 'completed'])
-            ->sum('total_amount'),
+            'total_spend' => Order::where('user_id', $userId)
+                ->whereIn('status', ['delivered', 'completed'])
+                ->sum('total_amount'),
             'wishlist_count' => auth()->user()->wishlist()->count(),
         ];
 
@@ -62,27 +63,27 @@ class DashboardController extends Controller
         ]);
     }
 
-public function orderDetails($invoice_no)
-{
-    $userId = Auth::id();
+    public function orderDetails($invoice_no)
+    {
+        $userId = Auth::id();
 
-    $order = Order::with(['items.product'])
-        ->where('invoice_no', $invoice_no)
-        ->where('user_id', $userId)
-        ->firstOrFail();
-
-    $order->items->each(function ($item) use ($userId) {
-        $item->setRelation('review', Review::where('order_id', $item->order_id)
-            ->where('product_id', $item->product_id)
+        $order = Order::with(['items.product'])
+            ->where('invoice_no', $invoice_no)
             ->where('user_id', $userId)
-            ->first()
-        );
-    });
+            ->firstOrFail();
 
-    return Inertia::render('Dashboard/OrderDetails', [
-        'order' => $order
-    ]);
-}
+        $order->items->each(function ($item) use ($userId) {
+            $item->setRelation('review', Review::where('order_id', $item->order_id)
+                ->where('product_id', $item->product_id)
+                ->where('user_id', $userId)
+                ->first()
+            );
+        });
+
+        return Inertia::render('Dashboard/OrderDetails', [
+            'order' => $order
+        ]);
+    }
 
     public function profile()
     {
@@ -96,9 +97,24 @@ public function orderDetails($invoice_no)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:1024',
         ]);
 
-        $user->update($validated);
+        // Update basic info
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+
+        if ($request->hasFile('photo')) {
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            // Store new photo
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
+
+        $user->save();
 
         return back();
     }

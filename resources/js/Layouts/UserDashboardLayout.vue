@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import MainLayout from "@/Layouts/MainLayout.vue";
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, usePage, router } from "@inertiajs/vue3"; // ✅ router import
 import {
     Squares2X2Icon,
     ShoppingBagIcon,
@@ -9,10 +9,13 @@ import {
     ArrowRightOnRectangleIcon,
     Bars3Icon,
     XMarkIcon,
+    CameraIcon, // ✅ Icon Import
 } from "@heroicons/vue/24/outline";
 
 const page = usePage();
+const user = page.props.auth.user;
 const showMobileMenu = ref(false);
+const photoInput = ref(null); // ✅ Ref for file input
 
 const isActive = (route) => page.url.startsWith(route);
 
@@ -22,6 +25,34 @@ const menuItems = [
     { name: "My Orders", route: "/dashboard/orders", icon: ShoppingBagIcon },
     { name: "Profile Settings", route: "/dashboard/profile", icon: UserIcon },
 ];
+
+// ✅ Handle Profile Picture Upload (Sidebar Logic)
+const triggerFileInput = () => {
+    photoInput.value.click();
+};
+
+const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("photo", file);
+    formData.append("_method", "PATCH");
+    formData.append("name", user.name);
+    formData.append("email", user.email);
+
+    router.post(route("profile.update"), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            console.log("Profile picture updated from sidebar!");
+            // Optional: location.reload() if reactivity fails (should not be needed with Inertia)
+        },
+        onError: (errors) => {
+            console.error("Sidebar upload failed:", errors);
+            alert("Failed to upload photo. Ensure it is < 1MB.");
+        },
+    });
+};
 </script>
 
 <template>
@@ -43,11 +74,17 @@ const menuItems = [
                     >
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden border-2 border-[#1A1F2E]"
                             >
-                                {{ $page.props.auth.user.name.charAt(0) }}
+                                <img
+                                    :src="user.profile_photo_url"
+                                    class="w-full h-full object-cover"
+                                    :alt="user.name"
+                                />
                             </div>
-                            <span class="font-bold text-white">My Account</span>
+                            <span class="font-bold text-white">{{
+                                user.name
+                            }}</span>
                         </div>
                         <button
                             @click="showMobileMenu = !showMobileMenu"
@@ -82,37 +119,67 @@ const menuItems = [
                             class="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 overflow-hidden sticky top-24 shadow-xl"
                         >
                             <div
-                                class="p-8 border-b border-white/10 bg-gradient-to-br from-white/5 to-transparent"
+                                class="p-8 border-b border-white/10 bg-gradient-to-br from-white/5 to-transparent relative"
                             >
                                 <div
                                     class="flex flex-col items-center text-center"
                                 >
                                     <div
-                                        class="w-24 h-24 p-1 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/20 mb-4"
+                                        class="relative group cursor-pointer mb-4"
+                                        @click="triggerFileInput"
                                     >
+                                        <input
+                                            type="file"
+                                            ref="photoInput"
+                                            class="hidden"
+                                            accept="image/*"
+                                            @change="handlePhotoUpload"
+                                        />
+
                                         <div
-                                            class="w-full h-full bg-[#151925] rounded-full flex items-center justify-center text-white text-3xl font-bold border-2 border-transparent bg-clip-padding"
+                                            class="w-24 h-24 p-1 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/20"
                                         >
-                                            {{
-                                                $page.props.auth.user.name.charAt(
-                                                    0
-                                                )
-                                            }}
+                                            <div
+                                                class="w-full h-full bg-[#151925] rounded-full flex items-center justify-center text-white text-3xl font-bold border-2 border-transparent bg-clip-padding overflow-hidden"
+                                            >
+                                                <img
+                                                    :src="
+                                                        user.profile_photo_url
+                                                    "
+                                                    class="w-full h-full object-cover"
+                                                    :alt="user.name"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        >
+                                            <CameraIcon
+                                                class="w-6 h-6 text-white mb-1"
+                                            />
+                                            <span
+                                                class="text-[10px] font-bold text-white uppercase tracking-wider"
+                                                >Upload</span
+                                            >
                                         </div>
                                     </div>
-                                    <h3 class="font-bold text-white text-xl">
-                                        {{ $page.props.auth.user.name }}
-                                    </h3>
-                                    <p class="text-sm text-gray-400 mt-1">
-                                        {{ $page.props.auth.user.email }}
-                                    </p>
-                                    <span
-                                        class="mt-3 px-3 py-1 bg-green-500/10 text-green-400 text-xs font-bold rounded-full border border-green-500/20 uppercase tracking-wide"
+
+                                    <h3
+                                        class="font-bold text-white text-xl tracking-tight"
                                     >
-                                        {{
-                                            $page.props.auth.user.role ||
-                                            "Customer"
-                                        }}
+                                        {{ user.name }}
+                                    </h3>
+                                    <p
+                                        class="text-sm text-gray-400 mt-1 break-all"
+                                    >
+                                        {{ user.email }}
+                                    </p>
+
+                                    <span
+                                        class="mt-3 px-3 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-bold rounded-full border border-indigo-500/20 uppercase tracking-wide"
+                                    >
+                                        {{ user.role || "Customer" }}
                                     </span>
                                 </div>
                             </div>
